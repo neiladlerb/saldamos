@@ -88,7 +88,7 @@
   // Mensaje corto: qué está hecho, el resumen y un único llamado a confirmar
   function mensajeHecho(t, b) {
     return (b.para ? "Hola " + b.para.trim() + " 👋\n" : "") +
-      "✅ *Hecho:* " + t.texto + "\n" +
+      "*Hecho:* " + t.texto + "\n" +
       (b.resumen.trim() ? "\n" + b.resumen.trim() + "\n" : "") +
       "\n¿Me confirmas que está todo bien? 👇\n" + enlaceBonito(enlaceTarea(t));
   }

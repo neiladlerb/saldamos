@@ -102,7 +102,7 @@
       <a class="anadir boton-wa" id="wa" target="_blank" rel="noopener">Enviar por WhatsApp</a>
     </div>
     <details class="mesa" id="mesa">
-      <summary>📱 Enseñar un QR en la mesa</summary>
+      <summary>Enseñar un QR en la mesa</summary>
       <p class="ayuda" style="margin:6px 0">Cada uno lo escanea con su móvil, ve su parte y avisa a quien pagó. Sin descargar nada.</p>
       <div class="campos dos">
         <label class="etiqueta-campo">Quién pagó <span class="opcional">(opcional)</span><input type="text" id="mesa-pagador" maxlength="40" autocomplete="off"></label>
@@ -257,7 +257,7 @@
     // Mensaje de WhatsApp con motivo y fecha
     const motivo = $("motivo").value.trim();
     const f = $("fecha").value ? new Date($("fecha").value + "T12:00").toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }) : "";
-    const msg = "🧾 *" + (motivo || "Cuenta a dividir") + "*" + (f ? "\n" + f.charAt(0).toUpperCase() + f.slice(1) : "") + "\n" +
+    const msg = "*" + (motivo || "Cuenta a dividir") + "*" + (f ? "\n" + f.charAt(0).toUpperCase() + f.slice(1) : "") + "\n" +
                 "Total " + R.eur(totalProp) + (propina ? " (con " + propina + " % de propina)" : "") + " · " + personas + " personas\n\n" +
                 lineas.map(function (l) { const i = l.lastIndexOf(": "); return "• " + l.slice(0, i) + ": *" + l.slice(i + 2) + "*"; }).join("\n") +
                 "\n\n_Calculado con Saldamos_";

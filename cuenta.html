@@ -36,7 +36,7 @@
   </section>
 
   <section id="cuenta" hidden>
-    <span class="etiqueta">🧾 <span id="c-fecha"></span></span>
+    <span class="etiqueta">Ticket · <span id="c-fecha"></span></span>
     <h1 id="c-motivo" style="margin:4px 0 2px"></h1>
     <p class="ayuda" id="c-resumen" style="margin:0 0 16px"></p>
 
@@ -124,7 +124,7 @@
     $("p-a-quien").textContent = pagador ? "A " + pagador : "A quien pagó la cuenta";
     $("bizum").hidden = !tel; $("b-tel").textContent = tel;
     const yo = o.anonimo ? "" : " (" + o.nombre + ")";
-    const msg = "✅ Te he pagado *" + R.eur(o.importe) + "*" + yo + " de «" + ($("c-motivo").textContent) + "».\n_Calculado con Saldamos_";
+    const msg = "Te he pagado *" + R.eur(o.importe) + "*" + yo + " de «" + ($("c-motivo").textContent) + "».\n_Calculado con Saldamos_";
     $("avisar").href = R.enlaceWhatsApp(msg, tel);
     $("avisar").hidden = false;
   }

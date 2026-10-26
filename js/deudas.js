@@ -105,7 +105,7 @@
     const n = parseFloat(t); return isFinite(n) && n > 0 ? Math.round(n * 100) : 0;
   }
   function el(tag, clase, texto) { const e = document.createElement(tag); if (clase) e.className = clase; if (texto != null) e.textContent = texto; return e; }
-  function nombreMes(clave, largo) { const [a, m] = clave.split("-").map(Number); const t = new Date(a, m - 1, 1).toLocaleDateString("es-ES", largo ? { month: "long", year: "numeric" } : { month: "short" }).replace(".", ""); return t.charAt(0).toUpperCase() + t.slice(1); }
+  function nombreMes(clave, largo) { const [a, m] = clave.split("-").map(Number); let t = new Date(a, m - 1, 1).toLocaleDateString("es-ES", largo ? { month: "long", year: "numeric" } : { month: "short" }).replace(".", ""); if (!largo) t = t.slice(0, 3); return t.charAt(0).toUpperCase() + t.slice(1); }
   const TIPOS = { hipoteca: "Hipoteca", prestamo: "Préstamo personal", consumo: "Crédito al consumo", tarjeta: "Tarjeta / cuotas", comercial: "Crédito de tienda", otro: "Otra deuda" };
   const COLORES = ["var(--cat-1)", "var(--cat-2)", "var(--cat-3)", "var(--cat-4)", "var(--cat-5)", "var(--cat-6)"];
 
@@ -335,11 +335,11 @@
     const activas = deudas.filter(function (d) { return d.saldo > 0; });
     const malas = activas.filter(function (d) { return proyectar(d).nunca; });
     let t = "";
-    if (malas.length) t = "⚠ La cuota de «" + malas[0].nombre + "» no cubre ni los intereses: la deuda crece cada mes. Revisa los datos o habla con tu banco.";
+    if (malas.length) t = "Ojo: la cuota de «" + malas[0].nombre + "» no cubre ni los intereses: la deuda crece cada mes. Revisa los datos o habla con tu banco.";
     else if (activas.filter(function (d) { return d.tae > 0; }).length >= 2) {
       const cara = activas.slice().sort(function (a, b) { return b.tae - a.tae; })[0];
-      t = "💡 Si un mes te sobra dinero, adelántalo a «" + cara.nombre + "» (TAE " + String(cara.tae).replace(".", ",") + " %): es la que más intereses te cobra.";
-    } else if (R.nivel === "alto") t = "💡 Más del 40 % de tus ingresos va a cuotas. Antes de pedir un crédito nuevo, espera a terminar alguno.";
+      t = "Si un mes te sobra dinero, adelántalo a «" + cara.nombre + "» (TAE " + String(cara.tae).replace(".", ",") + " %): es la que más intereses te cobra.";
+    } else if (R.nivel === "alto") t = "Más del 40 % de tus ingresos va a cuotas. Antes de pedir un crédito nuevo, espera a terminar alguno.";
     c.textContent = t; c.className = "mensaje " + (malas.length ? "mal" : "ok"); c.hidden = !t;
   }
 
@@ -367,7 +367,7 @@
     const x = leerForm(); const p = $("dd-previa");
     if (!x.cuota || !x.saldo) { p.textContent = ""; return; }
     const pr = proyectar({ saldo: x.saldo, cuota: x.cuota, tae: x.tae, pagos: [] });
-    p.textContent = pr.nunca ? "⚠ Con esa cuota no se cubren los intereses: la deuda no bajaría." :
+    p.textContent = pr.nunca ? "Ojo: con esa cuota no se cubren los intereses: la deuda no bajaría." :
       "Terminarías en " + nombreMes(pr.fin, true) + " (" + pr.filas.length + " cuotas)" + (pr.intereses ? " y pagarías " + eur(pr.intereses) + " de intereses." : ", sin intereses.");
   }
   $("dd-form").addEventListener("input", previa);

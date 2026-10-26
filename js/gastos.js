@@ -165,7 +165,7 @@
     if (!t.items.length || t.cuadra) {
       estadoEscaneo("✓ Leído: " + (t.items.length ? t.items.length + " productos · " : "") + "total " + eur(t.total) + ". Revisa y, si algo lo pagaste por otra persona, cambia «Mío» por «Me debe».", "mensaje ok");
     } else {
-      estadoEscaneo("⚠ Los productos suman " + eur(t.sumaItems) + " y el total del ticket es " + eur(t.total) + ". Revisa los importes antes de guardar.", "mensaje mal");
+      estadoEscaneo("Ojo: Los productos suman " + eur(t.sumaItems) + " y el total del ticket es " + eur(t.total) + ". Revisa los importes antes de guardar.", "mensaje mal");
     }
     return true;
   }
@@ -350,13 +350,13 @@
         // Gasto de ticket: el detalle va plegado para no llenar la lista
         const det = document.createElement("details"); det.className = "g-ticket";
         const sum = document.createElement("summary");
-        sum.textContent = "🧾 Ticket" + (g.ticket.numero ? " nº " + g.ticket.numero : "") + " · " + lineasDe(g).length + " línea" + (lineasDe(g).length === 1 ? "" : "s");
+        sum.textContent = "Ticket" + (g.ticket.numero ? " nº " + g.ticket.numero : "") + " · " + lineasDe(g).length + " línea" + (lineasDe(g).length === 1 ? "" : "s");
         det.appendChild(sum);
         const datos = document.createElement("p"); datos.className = "ayuda g-ticket-datos";
         datos.textContent = [g.ticket.comercio, g.ticket.nif ? "NIF " + g.ticket.nif : "", g.ticket.fecha ? new Date(g.ticket.fecha + "T12:00").toLocaleDateString("es-ES") : "", g.ticket.total ? "Total del ticket " + eur(g.ticket.total) : ""].filter(Boolean).join(" · ");
         const compartir = document.createElement("button"); compartir.type = "button"; compartir.className = "boton-sec"; compartir.textContent = "Compartir ticket";
         compartir.addEventListener("click", function () {
-          const txt = "🧾 *" + (g.ticket.comercio || g.concepto) + "*" + (g.fecha ? " · " + new Date(g.fecha + "T12:00").toLocaleDateString("es-ES") : "") +
+          const txt = "*" + (g.ticket.comercio || g.concepto) + "*" + (g.fecha ? " · " + new Date(g.fecha + "T12:00").toLocaleDateString("es-ES") : "") +
             (g.ticket.numero ? "\nTicket nº " + g.ticket.numero : "") + "\n\n" +
             lineasDe(g).map(function (l) { return "• " + (l.item || "") + (l.persona && l.tipo !== "mio" ? " (" + l.persona + ")" : "") + ": " + eur(l.importe || 0); }).join("\n") +
             "\n\n*Total " + eur(totalDe(g)) + "*\n_Saldamos_";
@@ -481,13 +481,13 @@
 
     // Consejo + enviar
     const pie = mk("div", "m30-consejo");
-    pie.append(mk("span", "m30-bombilla", "💡"), mk("p", null, consejo));
+    pie.append(mk("p", null, consejo));
     const frases = ["Gastaste " + eur(miGasto) + (delta !== null ? " (" + (delta > 0 ? "+" : "−") + Math.abs(delta) + " % que el mes anterior)" : "") + "."];
     if (top) frases.push("Donde más: " + top + ", " + Math.round(porCat[top] * 100 / (miGasto || 1)) + " % del total.");
     if (mayor && miParte(mayor)) frases.push("Tu mayor gasto: " + mayor.concepto + " (" + eur(miParte(mayor)) + ").");
     if (meDeben) frases.push("Te deben " + eur(meDeben) + " todavía.");
     const wa = mk("a", "boton-sec", "Mandármelo por WhatsApp"); wa.target = "_blank"; wa.rel = "noopener";
-    wa.href = "https://wa.me/?text=" + encodeURIComponent("⏱ *" + nombreMes(mes) + " en 30 segundos*\n\n" + frases.map(function (f) { return "• " + f; }).join("\n") + "\n\n💡 " + consejo + "\n\n_Saldamos_");
+    wa.href = "https://wa.me/?text=" + encodeURIComponent("*" + nombreMes(mes) + " en 30 segundos*\n\n" + frases.map(function (f) { return "• " + f; }).join("\n") + "\n\nConsejo: " + consejo + "\n\n_Saldamos_");
 
     caja.append(cab, heroe, graficos, fichas, pie, wa, tip);
     caja.hidden = false;

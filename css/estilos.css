@@ -130,13 +130,13 @@
   .aviso {
     pointer-events: auto; max-width: 380px; width: 100%;
     background: var(--tarjeta); color: var(--texto);
-    border: 1px solid var(--borde); border-left: 4px solid var(--marca);
-    border-radius: 10px; padding: 12px 14px;
+    border: 1px solid var(--borde);
+    border-radius: 12px; padding: 12px 14px;
     box-shadow: 0 8px 24px rgba(28, 27, 60, .18);
     display: flex; gap: 12px; align-items: start;
     animation: entra .25s ease-out;
   }
-  .aviso strong { display: block; color: var(--marca); font-size: .8rem; letter-spacing: .04em; text-transform: uppercase; }
+  .aviso strong { display: block; color: var(--marca); font-size: .85rem; }
   .aviso p { margin: 2px 0 0; overflow-wrap: anywhere; }
   .aviso div { flex: 1; min-width: 0; }
   .aviso button { border: 0; background: none; color: var(--suave); font-size: 1.2rem; cursor: pointer; padding: 0 4px; }
@@ -158,7 +158,7 @@
   .cifras { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   @media (max-width: 560px) { .cifras { grid-template-columns: 1fr; } }
   .cifra { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 10px; padding: 12px 14px; display: grid; gap: 2px; }
-  .cifra small { font-size: .75rem; letter-spacing: .05em; text-transform: uppercase; color: var(--suave); font-weight: 600; }
+  .cifra small { font-size: .8rem; color: var(--suave); font-weight: 600; }
   .cifra b { font-family: var(--fuente-titulo); font-size: 1.5rem; font-variant-numeric: tabular-nums; }
   .cifra.positivo b { color: var(--verde); }
   .cifra.negativo b { color: var(--rojo); }
@@ -192,7 +192,7 @@
   #form-gasto { display: grid; gap: 12px; }
   .campos { display: grid; grid-template-columns: 1fr 150px 140px; gap: 8px; }
   @media (max-width: 560px) { .campos { grid-template-columns: 1fr 1fr; } .campos #g-concepto { grid-column: 1 / -1; } }
-  .etiqueta { font-size: .75rem; letter-spacing: .05em; text-transform: uppercase; color: var(--suave); font-weight: 600; margin: 4px 0 -4px; }
+  .etiqueta { font-size: .82rem; color: var(--suave); font-weight: 600; margin: 4px 0 -4px; }
   .linea-form { display: grid; grid-template-columns: 1fr 1fr 100px 130px auto; gap: 6px; align-items: center; }
   @media (max-width: 560px) {
     .linea-form { grid-template-columns: 1fr 1fr; padding-bottom: 8px; border-bottom: 1px dashed var(--borde); }
@@ -266,7 +266,7 @@ a { color: var(--marca); }
 .tabla-caja { overflow-x: auto; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; }
 table { border-collapse: collapse; width: 100%; font-size: .88rem; min-width: 760px; }
 th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--borde); vertical-align: middle; }
-th { font-size: .72rem; letter-spacing: .05em; text-transform: uppercase; color: var(--suave); font-weight: 600; }
+th { font-size: .8rem; color: var(--suave); font-weight: 600; }
 td.num { font-variant-numeric: tabular-nums; text-align: right; }
 tr:last-child td { border-bottom: 0; }
 .estado { font-size: .75rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
@@ -366,10 +366,12 @@ li.hecha .panel-hecho, li.hecha .estado-cierre { text-decoration: none; }
 h1 .logo { width: 1.1em; height: 1.1em; vertical-align: -0.12em; margin-right: .12em; }
 
 /* Tu mes en 30 segundos · colores por categoría validados (CVD) en claro y oscuro */
-:root { --cat-1: #2a78d6; --cat-2: #eb6834; --cat-3: #1baf7a; --cat-4: #eda100; --cat-5: #e87ba4; --cat-6: #4a3aa7; --cat-otros: #8f9792; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #c98500; --cat-5: #d55181; --cat-6: #9085e9; --cat-otros: #6f7873; } }
-:root[data-theme="dark"] { --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #c98500; --cat-5: #d55181; --cat-6: #9085e9; --cat-otros: #6f7873; }
-.mes-30 { position: relative; background: var(--tarjeta); border: 1px solid var(--borde); border-top: 4px solid var(--marca); border-radius: 16px; padding: 16px 18px; margin: 12px 0 4px; display: grid; gap: 14px; }
+/* Categorías con la paleta corporativa: escalones de esmeralda, lima y tinta (no colores de arcoíris).
+   Se distinguen por luminosidad y siempre van con su nombre al lado. */
+:root { --cat-1: #0b6e4f; --cat-2: #5aa786; --cat-3: #a9d9c3; --cat-4: #c6f432; --cat-5: #10241c; --cat-6: #7d8f86; --cat-otros: #cfdad4; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cat-1: #5fd6a2; --cat-2: #2f8f69; --cat-3: #a9e3c8; --cat-4: #c6f432; --cat-5: #e8f2ec; --cat-6: #7d8f86; --cat-otros: #3b4a43; } }
+:root[data-theme="dark"] { --cat-1: #5fd6a2; --cat-2: #2f8f69; --cat-3: #a9e3c8; --cat-4: #c6f432; --cat-5: #e8f2ec; --cat-6: #7d8f86; --cat-otros: #3b4a43; }
+.mes-30 { position: relative; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 16px; padding: 16px 18px; margin: 12px 0 4px; display: grid; gap: 14px; }
 .m30-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .m30-titulo { font-weight: 700; color: var(--marca); }
 .m30-mes { color: var(--suave); font-size: .9rem; }
@@ -381,7 +383,7 @@ h1 .logo { width: 1.1em; height: 1.1em; vertical-align: -0.12em; margin-right: .
 .m30-sub { flex-basis: 100%; color: var(--suave); font-size: .85rem; }
 .m30-graficos { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 @media (max-width: 560px) { .m30-graficos { grid-template-columns: 1fr; } }
-.m30-eti { margin: 0 0 8px; font-size: .75rem; letter-spacing: .05em; text-transform: uppercase; color: var(--suave); font-weight: 600; }
+.m30-eti { margin: 0 0 8px; font-size: .82rem; color: var(--suave); font-weight: 600; }
 .m30-barras { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; height: 130px; align-items: end; border-bottom: 1px solid var(--borde); }
 .m30-col { display: grid; grid-template-rows: 1fr auto; height: 100%; cursor: default; outline-offset: 2px; }
 .m30-zona { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; min-height: 0; }
@@ -447,17 +449,20 @@ h1 .logo { width: 1.1em; height: 1.1em; vertical-align: -0.12em; margin-right: .
 @media (max-width: 480px) { .dd-cargo { grid-template-columns: auto 1fr auto; } .dd-cargo > button { grid-column: 2 / -1; justify-self: start; } }
 .dd-dia { display: grid; justify-items: center; min-width: 40px; line-height: 1.1; }
 .dd-dia b { font-family: var(--fuente-titulo); font-size: 1.3rem; }
-.dd-dia small { font-size: .7rem; color: var(--suave); text-transform: uppercase; }
+.dd-dia small { font-size: .72rem; color: var(--suave); }
 .dd-cargo.pagada { opacity: .75; }
 .dd-cargo.vencida .dd-dia b { color: var(--rojo); }
 #dd-lista { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
-.dd-deuda { background: var(--tarjeta); border: 1px solid var(--borde); border-left: 5px solid var(--color-deuda, var(--marca)); border-radius: 14px; padding: 12px 14px; display: grid; gap: 8px; }
+.dd-deuda { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px; padding: 12px 14px; display: grid; gap: 8px; }
 .dd-deuda.saldada { opacity: .7; }
 .dd-cab { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
 .dd-cab .cuerpo { display: grid; gap: 2px; min-width: 0; }
 .dd-saldo { font-family: var(--fuente-titulo); font-size: 1.25rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .dd-progreso { height: 8px; background: var(--marca-claro); border-radius: 999px; overflow: hidden; }
-.dd-progreso span { display: block; height: 100%; background: var(--color-deuda, var(--marca)); }
+.dd-progreso span { display: block; height: 100%; background: var(--marca); border-radius: 999px; }
+/* La deuda se reconoce en los gráficos por la muestra de color junto a su nombre */
+.dd-cab .cuerpo strong { display: flex; align-items: center; gap: 8px; }
+.dd-cab .cuerpo strong::before { content: ""; width: 10px; height: 10px; border-radius: 3px; flex: none; background: var(--color-deuda, var(--marca)); }
 .dd-datos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 @media (max-width: 560px) { .dd-datos { grid-template-columns: 1fr 1fr; } }
 .dd-datos div { background: var(--fondo); border-radius: 10px; padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
@@ -474,12 +479,12 @@ h1 .logo { width: 1.1em; height: 1.1em; vertical-align: -0.12em; margin-right: .
 .g-ticket .boton-sec { margin-top: 6px; }
 
 /* ===================== Presupuesto compartido (Premium) ===================== */
-.pres-caja { display: grid; gap: 12px; border-top: 4px solid var(--marca); }
-.pres-caja.bloqueado { border-top-color: var(--borde); background: repeating-linear-gradient(135deg, var(--tarjeta) 0 14px, var(--fondo) 14px 28px); }
+.pres-caja { display: grid; gap: 12px; }
+.pres-caja.bloqueado { background: var(--fondo); }
 .pres-caja h2 { font-size: 1.15rem; }
-.insignia-premium { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; background: var(--acento); color: #10241c; }
+.insignia-premium { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; background: var(--acento); color: #10241c; }
 .insignia-premium::before { content: "★"; }
-.eti { margin: 6px 0 -4px; font-size: .75rem; letter-spacing: .05em; text-transform: uppercase; color: var(--suave); font-weight: 600; }
+.eti { margin: 6px 0 -4px; font-size: .82rem; color: var(--suave); font-weight: 600; }
 .pr-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .pr-nav strong { font-family: Outfit, sans-serif; font-size: 1.05rem; }
 .pr-nav .boton-sec { min-width: 40px; }
@@ -577,7 +582,7 @@ h1 .logo { width: 1.1em; height: 1.1em; vertical-align: -0.12em; margin-right: .
 /* ===== Prototipos ===== */
 .proto-opinion { border: 1.5px dashed var(--secundario); border-radius: 12px; padding: 10px 12px; margin-top: 12px; display: grid; gap: 8px; background: var(--tarjeta); }
 .proto-cab { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.proto-badge { font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; background: var(--acento); color: #10241c; padding: 2px 8px; border-radius: 999px; }
+.proto-badge { font-size: .75rem; font-weight: 700; background: var(--acento); color: #10241c; padding: 2px 8px; border-radius: 999px; }
 .proto-titulo { font-weight: 600; flex: 1; min-width: 120px; }
 .proto-form { display: grid; gap: 8px; }
 .proto-form .ayuda { margin: 0; }
@@ -588,7 +593,7 @@ h1 .logo { width: 1.1em; height: 1.1em; vertical-align: -0.12em; margin-right: .
 .proto-estrellas button.on { color: #f2a93b; }
 .proto-carta h2 { margin-top: 0; }
 .meta-barra { height: 12px; background: var(--marca-claro); border-radius: 999px; overflow: hidden; }
-.meta-barra span { display: block; height: 100%; background: linear-gradient(90deg, var(--marca), var(--acento)); border-radius: 999px; }
+.meta-barra span { display: block; height: 100%; background: var(--marca); border-radius: 999px; }
 .meta-barra.mini { height: 8px; }
 .meta-total { margin: 4px 0 8px; font-weight: 600; }
 .meta-fila { display: grid; grid-template-columns: minmax(80px, 140px) 1fr 52px; gap: 10px; align-items: center; padding: 4px 0; }
@@ -670,8 +675,7 @@ a.anadir, a.boton-sec { display: inline-flex; align-items: center; justify-conte
 .estado.plan-empresa { background: var(--texto); color: var(--fondo); }
 .propuestas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 @media (max-width: 760px) { .propuestas { grid-template-columns: minmax(0, 1fr); } }
-.propuesta { background: var(--tarjeta); border: 1px solid var(--borde); border-left: 4px solid var(--secundario); border-radius: 14px; padding: 16px; display: grid; gap: 8px; align-content: start; }
-.propuesta.prioridad-1 { border-left-color: var(--marca); }
+.propuesta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px; padding: 16px; display: grid; gap: 8px; align-content: start; }
 .propuesta h3 { font-family: var(--fuente-titulo); font-size: 1.05rem; margin: 0; }
 .propuesta-cab { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
 .propuesta-motivo { margin: 0; color: var(--suave); line-height: 1.45; }

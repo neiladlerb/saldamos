@@ -48,7 +48,7 @@
       if (window.sb && window.MODO_DEMO) {
         try { await sb.from("sugerencias").insert({ tipo: "idea", puntuacion: estrellas || null, texto: "[Prototipo · " + titulo + "] " + (op.comentario || "(sin comentario)"), pagina: "prototipo:" + ideaId }); } catch (e) {}
       }
-      wa.href = "https://wa.me/" + TELEFONO_FEEDBACK + "?text=" + encodeURIComponent("💬 Opinión sobre «" + titulo + "» (Saldamos)\n" + (estrellas ? "★".repeat(estrellas) + "☆".repeat(5 - estrellas) + "\n" : "") + (op.comentario || ""));
+      wa.href = "https://wa.me/" + TELEFONO_FEEDBACK + "?text=" + encodeURIComponent("Opinión sobre «" + titulo + "» (Saldamos)\n" + (estrellas ? "★".repeat(estrellas) + "☆".repeat(5 - estrellas) + "\n" : "") + (op.comentario || ""));
       ok.hidden = false; wa.hidden = false; enviar.disabled = true;
     });
     return caja;
@@ -126,7 +126,7 @@
   function cartaHogar(g, guardar) {
     const c = el("section", "tarjeta proto-carta");
     const pc = porcHogar(g);
-    c.append(el("h2", null, "🏠 Gastos fijos del hogar"),
+    c.append(el("h2", null, "Gastos fijos del hogar"),
       el("p", "ayuda", "Reparto según ingresos: " + g.miembros.map(function (m) { return m.nombre + " " + String(pc[m.id] || 0).replace(".", ",") + " %"; }).join(" · ")));
     const mes = hoyISO(0).slice(0, 7);
     const lista = el("div", "g-lineas");
@@ -180,7 +180,7 @@
     const llevado = g.miembros.reduce(function (s, m) { return s + Math.min(mt.aportado[m.id] || 0, mt.por_persona); }, 0);
     const fecha = new Date(mt.fecha + "T12:00");
     const meses = Math.max(1, Math.round((fecha - new Date()) / (30.4 * 86400000)));
-    c.append(el("h2", null, "🎯 Meta: " + eur(mt.por_persona) + " por persona"),
+    c.append(el("h2", null, "Meta: " + eur(mt.por_persona) + " por persona"),
       el("p", "ayuda", "Para el " + fecha.toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" }) + ". Cada uno ahorra en su propio banco: Saldamos solo lleva la cuenta."));
     const barra = el("div", "meta-barra"); const relleno = el("span"); relleno.style.width = Math.round(llevado * 100 / objetivo) + "%"; barra.appendChild(relleno);
     c.append(barra, el("p", "meta-total", eur(llevado) + " de " + eur(objetivo) + " · " + Math.round(llevado * 100 / objetivo) + " %"));
@@ -190,7 +190,7 @@
       const f = el("div", "meta-fila");
       const b = el("div", "meta-barra mini"); const r = el("span"); r.style.width = pct + "%"; b.appendChild(r);
       const falta = Math.max(0, mt.por_persona - v);
-      f.append(el("span", null, m.nombre + (m.yo ? " (tú)" : "") + (pct >= 100 ? " 🏁" : "")), b, el("span", "importe", pct + " %"));
+      f.append(el("span", null, m.nombre + (m.yo ? " (tú)" : "") + (pct >= 100 ? " · conseguido" : "")), b, el("span", "importe", pct + " %"));
       f.title = falta ? "Le faltan " + eur(falta) + " (" + eur(Math.ceil(falta / meses)) + "/mes)" : "¡Meta cumplida!";
       lista.appendChild(f);
     });
@@ -206,14 +206,14 @@
       c.appendChild(fila);
     }
     const ranking = g.miembros.slice().sort(function (a, b) { return (mt.aportado[b.id] || 0) - (mt.aportado[a.id] || 0); })
-      .map(function (m) { return (Math.min(100, Math.round((mt.aportado[m.id] || 0) * 100 / mt.por_persona)) >= 100 ? "🏁 " : "• ") + m.nombre + ": " + Math.min(100, Math.round((mt.aportado[m.id] || 0) * 100 / mt.por_persona)) + " %"; }).join("\n");
+      .map(function (m) { return (Math.min(100, Math.round((mt.aportado[m.id] || 0) * 100 / mt.por_persona)) >= 100 ? "✓ " : "• ") + m.nombre + ": " + Math.min(100, Math.round((mt.aportado[m.id] || 0) * 100 / mt.por_persona)) + " %"; }).join("\n");
     const wa = el("a", "anadir boton-wa", "Animar al grupo por WhatsApp"); wa.target = "_blank"; wa.rel = "noopener";
-    wa.href = R.enlaceWhatsApp("🎯 *" + g.nombre + "*: llevamos " + Math.round(llevado * 100 / objetivo) + " % de la meta\n\n" + ranking + "\n\n¡Quedan " + meses + " meses! 💪", "");
+    wa.href = R.enlaceWhatsApp("*" + g.nombre + "*: llevamos " + Math.round(llevado * 100 / objetivo) + " % de la meta\n\n" + ranking + "\n\n¡Quedan " + meses + " meses!", "");
     c.append(wa, cajaOpinion("t-huchas", "Metas de ahorro en grupo", "¿Os motivaría ver el progreso de todos? ¿Os daría corte o al revés?"));
     return c;
   }
 
-  const MSG_PT = function (de, a, imp, grupo) { return "Olá " + de + "! 👋\nNo grupo *" + grupo + "* ficou: pagas *" + eur(imp) + "* a " + a + ".\nPodes pagar com MB WAY: desde 2026 funciona com o Bizum de Espanha. 🇵🇹🇪🇸\n_Saldamos_"; };
+  const MSG_PT = function (de, a, imp, grupo) { return "Olá " + de + "! 👋\nNo grupo *" + grupo + "* ficou: pagas *" + eur(imp) + "* a " + a + ".\nPodes pagar com MB WAY: desde 2026 funciona com o Bizum de Espanha.\n_Saldamos_"; };
   function cartaEuropa(g) {
     const c = el("section", "tarjeta proto-carta");
     c.append(el("h2", null, "🇪🇺 Amigos de varios países"),
@@ -297,7 +297,7 @@
   const TEXTO_EJEMPLO = "SUPERMERCADO EL SOL\nC/ Mayor 12, Madrid\nNIF B12345678\nFACTURA SIMPLIFICADA 2026-0412\nFecha: 04/10/2026 19:42\nLECHE ENTERA 6X1L 5,94\nPAN DE MOLDE 1,35\n2 x YOGUR NATURAL 2,40\nTOMATE KG 2,18\nACEITE OLIVA 1L 8,95\nDETERGENTE 6,50\nCAFE MOLIDO 3,29\nTOTAL 30,61 EUR\nTARJETA 30,61\nIVA 10% BASE 25,10 2,51";
   function montarTicket() {
     const caja = document.querySelector(".escanear"); if (!caja || !window.Ticket) return;
-    const b = el("button", "boton-sec", "🧾 Probar con un ticket de ejemplo"); b.type = "button";
+    const b = el("button", "boton-sec", "Probar con un ticket de ejemplo"); b.type = "button";
     const img = el("img"); img.src = "img/ticket-ejemplo.png"; img.alt = "Ticket de ejemplo"; img.className = "ticket-mini"; img.hidden = true;
     b.addEventListener("click", async function () {
       const estado = $("g-escaneo");

@@ -156,15 +156,15 @@
   function mensajeGrupo(grupo, enlace) {
     const p = plan(grupo);
     const n = (grupo.miembros || []).length, ng = (grupo.gastos || []).length;
-    let t = "📊 *" + grupo.nombre + "*\n";
+    let t = "*" + grupo.nombre + "*\n";
     t += "Total " + eur(total(grupo)) + " · " + n + " personas · " + ng + " gasto" + (ng === 1 ? "" : "s") + "\n\n";
     if (!p.length) {
-      t += "✅ Todo saldado. ¡Gracias a todos!\n";
+      t += "Todo saldado. ¡Gracias a todos!\n";
     } else {
       t += "*Para quedar en paz:*\n";
       p.forEach(function (x) { t += "• " + nombre(grupo, x.de) + " → " + nombre(grupo, x.a) + ": *" + eur(x.importe) + "*\n"; });
     }
-    if (enlace) t += "\nCada uno ve su parte y avisa cuando pague 👇\n" + limpio(enlace);
+    if (enlace) t += "\nCada uno ve su parte y avisa cuando pague:\n" + limpio(enlace);
     return t;
   }
 
@@ -181,17 +181,17 @@
         const acreedor = (grupo.miembros || []).find(function (m) { return m.id === x.a; });
         if (acreedor && acreedor.yo && (acreedor.telefono || acreedor.iban)) {
           t += "\n";
-          if (acreedor.telefono) t += "💸 Bizum: " + acreedor.telefono + "\n";
-          if (acreedor.iban) t += "🏦 IBAN: " + formatoIBAN(acreedor.iban) + "\n";
+          if (acreedor.telefono) t += "Bizum: " + acreedor.telefono + "\n";
+          if (acreedor.iban) t += "IBAN: " + formatoIBAN(acreedor.iban) + "\n";
         }
       });
-      if (enlace) t += "\nDetalle y botón «Ya he pagado» 👇\n" + limpio(enlace);
+      if (enlace) t += "\nDetalle y botón «Ya he pagado»:\n" + limpio(enlace);
     } else if (d.cobra.length) {
       d.cobra.forEach(function (x) { t += nombre(grupo, x.de) + " te paga *" + eur(x.importe) + "*\n"; });
-      if (enlace) t += "\nDetalle 👇\n" + limpio(enlace);
+      if (enlace) t += "\nDetalle:\n" + limpio(enlace);
     } else {
-      t += "✅ Estás en paz con el grupo.\n";
-      if (enlace) t += "\nDetalle 👇\n" + limpio(enlace);
+      t += "Estás en paz con el grupo.\n";
+      if (enlace) t += "\nDetalle:\n" + limpio(enlace);
     }
     return t;
   }

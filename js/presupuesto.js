@@ -182,7 +182,7 @@
         caja.appendChild(b);
       } else {
         caja.classList.add("bloqueado");
-        caja.appendChild(el("p", "mensaje", "🔒 Disponible en el plan Premium (precio por definir)."));
+        caja.appendChild(el("p", "mensaje", "Disponible en el plan Premium."));
       }
       return;
     }
