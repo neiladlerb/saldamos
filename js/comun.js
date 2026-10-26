@@ -31,7 +31,11 @@ async function miPerfil() {
   const s = await sesionActual();
   if (!s) return null;
   const { data, error } = await sb.from("perfiles").select("*").eq("id", s.user.id).maybeSingle();
-  if (error) return null;
+  if (error || !data) return null;
+  // Premium regalado por una promoción (invitar a amigos, código): cuenta como Premium mientras dure
+  if ((data.plan || "gratis") === "gratis" && data.premium_hasta && Date.parse(data.premium_hasta) > Date.now()) {
+    data.plan = "premium"; data.premium_promo = true;
+  }
   return data;
 }
 

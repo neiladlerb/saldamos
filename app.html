@@ -26,6 +26,7 @@
       <summary class="boton-sec" id="nombre-usuario">Mi cuenta</summary>
       <div class="opciones">
         <a href="admin.html" id="enlace-admin" hidden>Back office</a>
+        <button type="button" id="b-invitar">Invita a tus amigos</button>
         <a href="cobros.html" id="enlace-cobros">Cobrar con Bizum Pay</a>
         <button type="button" id="b-exportar">Descargar mis datos</button>
         <button type="button" id="b-salir">Cerrar sesión</button>
@@ -35,8 +36,22 @@
   </div>
 
   <section class="tarjeta" id="bloqueado" hidden>
-    <h2>Cuenta bloqueada</h2>
-    <p style="margin:0">Tu cuenta está bloqueada. Si crees que es un error, escríbenos al email que aparece en el <a href="aviso-legal.html">aviso legal</a>.</p>
+    <h2><span id="bloqueado-titulo">Cuenta bloqueada</span></h2>
+    <p style="margin:0"><span id="bloqueado-texto">Tu cuenta está bloqueada.</span> Si crees que es un error, escríbenos al email que aparece en el <a href="aviso-legal.html">aviso legal</a>.</p>
+  </section>
+
+  <!-- Invita a tus amigos y códigos promocionales (js/invitar.js) -->
+  <section class="tarjeta invitar" id="invitar" hidden aria-labelledby="invitar-titulo">
+    <div class="fila-titulo"><h2 id="invitar-titulo">Invita a tus amigos</h2><button type="button" class="enlace-boton" id="invitar-cerrar">Cerrar</button></div>
+    <p class="ayuda" id="invitar-promo" style="margin:0">Comparte tu enlace: tus amigos crean su cuenta gratis y empezáis a llevar las cuentas juntos.</p>
+    <div class="invitar-enlace"><input type="text" id="invitar-url" readonly aria-label="Tu enlace para invitar"><button type="button" class="boton-sec" id="invitar-copiar">Copiar</button></div>
+    <div class="botones"><a class="boton-sec wa" id="invitar-wa" target="_blank" rel="noopener">Enviar por WhatsApp</a></div>
+    <p class="ayuda" id="invitar-estado" style="margin:0"></p>
+    <form id="form-codigo" class="invitar-enlace" novalidate>
+      <input type="text" id="codigo-promo" placeholder="¿Tienes un código? Escríbelo aquí" aria-label="Código promocional" autocomplete="off" maxlength="24">
+      <button class="anadir" type="submit">Canjear</button>
+    </form>
+    <p class="mensaje" id="codigo-msg" hidden></p>
   </section>
 
   <header>
@@ -314,6 +329,7 @@
 <script src="js/ticket.js"></script>
 <script src="js/dimelo.js"></script>
 <script src="js/cuenta.js"></script>
+<script src="js/invitar.js"></script>
 <script src="js/sugerencias.js"></script>
 <script src="js/extras-demo.js"></script>
 <script src="js/pwa.js"></script>

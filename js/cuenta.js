@@ -10,9 +10,13 @@
 
   const perfil = await miPerfil();
   document.getElementById("nombre-usuario").textContent = (perfil && perfil.nombre) || sesion.user.email;
-  if (perfil && perfil.rol === "admin") document.getElementById("enlace-admin").hidden = false;
+  if (perfil && (perfil.rol === "admin" || perfil.rol === "comercial")) document.getElementById("enlace-admin").hidden = false;
 
-  if (perfil && perfil.estado === "bloqueado") {
+  if (perfil && perfil.estado !== "activo") {
+    if (perfil.estado === "cancelada") {
+      document.getElementById("bloqueado-titulo").textContent = "Cuenta cancelada";
+      document.getElementById("bloqueado-texto").textContent = "Esta cuenta está cancelada.";
+    }
     document.querySelectorAll("#app > header, #app > nav, #app > .panel").forEach(function (el) { el.hidden = true; });
     document.getElementById("bloqueado").hidden = false;
     return;

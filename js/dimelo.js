@@ -4,11 +4,11 @@
 //  · Gratis: reglas que corren en el propio móvil (no sale nada de él).
 //    Entiende tareas, gastos, gastos de un grupo, grupos nuevos, deudas,
 //    pagos («Ana me ha pagado 20 €») y gastos extra del presupuesto.
-//  · Premium / Empresas: la frase la interpreta una IA (Claude) en el
-//    servidor (/api/dimelo). Entiende cualquier forma de decirlo y
-//    varias cosas a la vez. Si la IA falla, se usan las reglas.
+//  · Premium / Empresas: modo avanzado en el servidor (/api/dimelo).
+//    Entiende cualquier forma de decirlo y varias cosas a la vez.
+//    Si no responde, se usan las reglas.
 //
-//  En los dos casos la IA o las reglas solo PROPONEN: la app enseña
+//  En los dos casos solo se PROPONE: la app enseña
 //  «He entendido esto» y no guarda nada hasta que pulsas «Guardar».
 //  Todo lo que se guarda pasa por las mismas reglas de la base de datos.
 // =====================================================================
@@ -149,13 +149,13 @@
     return mejor;
   }
 
-  // Varias cosas en una frase (lo usa la demo para simular la IA)
+  // Varias cosas en una frase (lo usa la demo para simular el modo Premium)
   function partirFrases(texto) {
     return String(texto || "").split(/\s*(?:\.\s+|;\s*|\by además\b|\by también\b|\by luego\b|,?\s+y (?=recu[eé]rdame|ap[uú]ntame|apunta|crea|av[ií]same))\s*/i).map(function (x) { return x.trim(); }).filter(function (x) { return x.length > 2; });
   }
 
   // ---------------- 2 · Comprobar la acción contra tus datos ----------------
-  // Sirve igual para lo que proponen las reglas y la IA: busca el grupo y las
+  // Sirve igual para lo que proponen las reglas y el modo Premium: busca el grupo y las
   // personas, pasa euros a céntimos y rechaza lo que no tenga sentido.
   function buscarGrupo(nombre, grupos) {
     if (!nombre) return null;
@@ -360,7 +360,7 @@
     throw new Error("No sé guardar eso");
   }
 
-  // ---------------- 4 · Premium: la IA en el servidor ----------------
+  // ---------------- 4 · Premium: modo avanzado en el servidor ----------------
   let planCache = null;
   async function miPlan() {
     if (planCache) return planCache;
@@ -378,7 +378,7 @@
   }
   async function interpretarIA(texto, grupos) {
     if (global.MODO_DEMO) {
-      // La demo no tiene servidor: simulamos la IA con las reglas, frase a frase
+      // La demo no tiene servidor: simulamos el modo avanzado con las reglas, frase a frase
       return { acciones: partirFrases(texto).map(function (f) { return interpretarReglas(f, grupos); }), simulada: true };
     }
     const s = await sesionActual(); if (!s) throw new Error("Sin sesión");
@@ -387,7 +387,7 @@
       body: JSON.stringify({ texto: texto, hoy: hoyISO(0), grupos: contexto(grupos) })
     });
     const j = await r.json().catch(function () { return {}; });
-    if (!r.ok) { const e = new Error(j.error || "La IA no está disponible"); e.status = r.status; throw e; }
+    if (!r.ok) { const e = new Error(j.error || "El modo Premium no está disponible"); e.status = r.status; throw e; }
     return { acciones: j.acciones || [] };
   }
 
@@ -399,7 +399,7 @@
     const nav = document.querySelector("nav.pestanas"); if (!nav || $("dm-texto")) return;
     const caja = el("section", "tarjeta dimelo"); caja.id = "dimelo";
     caja.innerHTML =
-      '<div class="dimelo-fila"><input type="text" id="dm-texto" maxlength="300" autocomplete="off" placeholder="✨ Dímelo y lo apunto: «cena 120 € entre 4, pagó Ana»" aria-label="Dímelo y lo apunto">' +
+      '<div class="dimelo-fila"><input type="text" id="dm-texto" maxlength="300" autocomplete="off" placeholder="Dímelo y lo apunto: «cena 120 € entre 4, pagó Ana»" aria-label="Dímelo y lo apunto">' +
       '<button type="button" class="boton-sec" id="dm-voz" aria-label="Dictar" title="Dictar" hidden><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><button type="button" class="anadir" id="dm-ir">Apuntar</button></div>' +
       '<p class="dimelo-modo" id="dm-modo"></p><div class="dimelo-ejemplos" id="dm-ejemplos"></div><div id="dm-carta" hidden></div>';
     nav.parentNode.insertBefore(caja, nav);
@@ -415,27 +415,27 @@
     function pintarModo(plan) {
       const m = $("dm-modo"); m.innerHTML = "";
       if (plan === "premium" || plan === "empresa") {
-        m.append(el("span", "insignia-premium", "IA"), document.createTextNode(" Entiende cualquier frase y varias cosas a la vez." + (global.MODO_DEMO ? " (En la demo la IA se simula.)" : "")));
+        m.append(el("span", "insignia-premium", "Premium"), document.createTextNode(" Entiende cualquier frase y varias cosas a la vez." + (global.MODO_DEMO ? " (En la demo se simula.)" : "")));
       } else {
         m.appendChild(document.createTextNode("Tareas, gastos, grupos, deudas y pagos con frases sencillas. "));
-        const s = el("span", "dimelo-mas", "Con Premium, la IA entiende cualquier frase y varias cosas a la vez."); m.appendChild(s);
+        const s = el("span", "dimelo-mas", "Con Premium entiende cualquier frase y varias cosas a la vez."); m.appendChild(s);
       }
     }
 
     let acciones = [];
     async function procesar() {
       const txt = $("dm-texto").value.trim(); if (!txt) return;
-      const ir = $("dm-ir"); ir.disabled = true; ir.textContent = "Pensando…";
+      const ir = $("dm-ir"); ir.disabled = true; ir.textContent = "Leyendo…";
       const gs = (await sb.from("grupos").select("*")).data || [];
       const plan = await miPlan();
       let brutas = [], aviso = "", fuente = "reglas";
       if (plan === "premium" || plan === "empresa") {
         try { const r = await interpretarIA(txt, gs); brutas = r.acciones; fuente = r.simulada ? "ia-simulada" : "ia"; }
-        catch (e) { brutas = [interpretarReglas(txt, gs)]; aviso = e.status === 429 ? "Has llegado al límite de hoy de la IA; lo he interpretado con las reglas." : e.status === 503 ? "La IA aún no está activada; lo he interpretado con las reglas." : "La IA no ha respondido; lo he interpretado con las reglas."; }
+        catch (e) { brutas = [interpretarReglas(txt, gs)]; aviso = e.status === 429 ? "Has llegado al límite de hoy del modo Premium; lo he interpretado con el modo básico." : "Ahora mismo no puedo usar el modo Premium; lo he interpretado con el modo básico."; }
       } else {
         const partes = partirFrases(txt);
         brutas = [interpretarReglas(partes[0] || txt, gs)];
-        if (partes.length > 1) aviso = "Parece que son " + partes.length + " cosas: te propongo la primera. Escribe las demás de una en una (con Premium, la IA las entiende juntas).";
+        if (partes.length > 1) aviso = "Parece que son " + partes.length + " cosas: te propongo la primera. Escribe las demás de una en una (con Premium las entiende juntas).";
       }
       ir.disabled = false; ir.textContent = "Apuntar";
       acciones = brutas.slice(0, 3).map(function (b) { return resolver(b, gs); });
@@ -445,7 +445,7 @@
     function pintarCarta(fuente, aviso) {
       const carta = $("dm-carta"); carta.innerHTML = ""; carta.hidden = false;
       const cab = el("p", "etiqueta", acciones.length > 1 ? "He entendido " + acciones.length + " cosas:" : "He entendido esto:");
-      if (fuente !== "reglas") cab.appendChild(el("span", "insignia-premium dimelo-ia", fuente === "ia" ? "IA" : "IA · demo"));
+      if (fuente !== "reglas") cab.appendChild(el("span", "insignia-premium dimelo-ia", fuente === "ia" ? "Premium" : "Premium · demo"));
       carta.appendChild(cab);
       if (aviso) carta.appendChild(el("p", "ayuda", aviso));
       if (!acciones.length) acciones = [{ error: "No he entendido qué quieres apuntar." }];

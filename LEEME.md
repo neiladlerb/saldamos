@@ -44,6 +44,10 @@ Funciona sola, sin Claude: Supabase guarda las cuentas y los datos, y Vercel pub
 | `cobros.html` | Mi cuenta → «Cobrar con Bizum Pay» (conectar el TPV y ver cobros) |
 | `js/dimelo.js`, `api/dimelo.js`, `supabase/09_dimelo.sql` | «Dímelo y lo apunto»: reglas en el móvil (Gratis) e IA en el servidor (Premium) |
 | `js/sugerencias.js` | El botón «Sugerencias» de la app |
+| `supabase/10_backoffice.sql` | Back office comercial: rol «comercial», cuentas canceladas, pagos, promociones, «Invita a tus amigos» y campañas |
+| `js/admin.js`, `js/gestor-comercial.js` | Back office (pestañas) y las reglas del gestor comercial que propone campañas |
+| `api/admin-usuarios.js` | Función del servidor para crear cuentas desde el back office (envía la invitación por email) |
+| `js/invitar.js` | Mi cuenta → «Invita a tus amigos» y «¿Tienes un código?» |
 
 ---
 
@@ -57,7 +61,7 @@ Funciona sola, sin Claude: Supabase guarda las cuentas y los datos, y Vercel pub
 3. Cuando termine de crearse: menú izquierdo → **SQL Editor** → *New query*.
 4. Abre `supabase/esquema.sql` con el Bloc de notas, copia **todo**, pégalo y pulsa **Run**.
    Debe terminar con *Success. No rows returned*.
-5. Repite lo mismo con `supabase/02_grupos.sql`, `supabase/03_sugerencias.sql`, `supabase/04_pago_guiado.sql`, `supabase/05_compromisos.sql`, `supabase/06_deudas.sql`, `supabase/07_presupuesto.sql`, `supabase/08_bizum.sql` y `supabase/09_dimelo.sql` (una *New query* para cada uno). **El orden importa: esquema.sql → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09.**
+5. Repite lo mismo con `supabase/02_grupos.sql`, `supabase/03_sugerencias.sql`, `supabase/04_pago_guiado.sql`, `supabase/05_compromisos.sql`, `supabase/06_deudas.sql`, `supabase/07_presupuesto.sql`, `supabase/08_bizum.sql`, `supabase/09_dimelo.sql` y `supabase/10_backoffice.sql` (una *New query* para cada uno). **El orden importa: esquema.sql → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10.**
 
 ## Paso 2 · Conectar la web con Supabase
 
@@ -177,3 +181,16 @@ La base de datos ya tiene una tabla `sponsors` y cada perfil un campo `sponsor_i
 - **Arreglos en el móvil**: la app ya no se sale por la derecha en pantallas estrechas, las pestañas se deslizan si no caben, botones más cómodos al tacto, foco visible con teclado y menos animaciones para quien lo pida en su sistema.
 - **Más seguridad y menos dependencias**: lector de tickets servido desde la propia web, cabeceras de seguridad (HSTS incluido) y los archivos `supabase/`, `pruebas/` y la documentación no se publican (`.vercelignore`).
 - Arreglados: el enlace roto «Volver» de `empresas.html`, el ticket de ejemplo que faltaba en la versión real y el aviso «Dímelo» cuando no hay clave de la IA (ahora pasa a las reglas del móvil al momento).
+
+## Back office comercial (octubre 2026)
+**Necesita ejecutar `supabase/10_backoffice.sql`.** Para crear cuentas desde el back office, Vercel necesita además `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` y `SITIO_URL` (las mismas del paso 3 bis).
+
+- **Pestañas:** Resumen · Usuarios · Pagos · Promociones · Gestor comercial · Sugerencias.
+- **Resumen:** cuentas activas, Gratis, Premium de pago, Premium por promoción, Empresas (cuentas y nº de empresas), ingresos del mes, pendiente de cobro, invitados y altas de los últimos 30 días.
+- **Usuarios:** crear cuenta (la persona recibe un email para elegir su contraseña), cambiar plan (y empresa), rol, bloquear, **cancelar** (no puede entrar, sus datos se conservan; se puede reactivar) y **borrar** con todos sus datos. Las acciones delicadas piden pulsar dos veces.
+- **Pagos:** registrar cobros (plan, importe, método, periodo, referencia) y cambiar su estado (pagado, pendiente, fallido, reembolsado). Aún no hay pasarela de pago: los cobros se apuntan a mano.
+- **Promociones:** códigos de Premium gratis o descuento, con fechas y usos máximos. La de tipo **Invitación** activa es la de «Invita a tus amigos»: al registrarse alguien con el enlace de un amigo, los dos reciben los días de Premium.
+- **Gestor comercial:** propone campañas según los datos (cuentas Gratis activas, inactivas, cobros pendientes, Premium que caduca, pocas empresas, emails sin confirmar) y la época del año. Cada propuesta trae a quién va, el canal, el mensaje, el objetivo y, si hace falta, la promoción. «Crear campaña» la pasa a la lista de campañas (propuesta → aprobada → en marcha → terminada). Incluye la actividad comercial de la semana.
+- **Roles:** *Administrador* (todo) y *Comercial* (ve el negocio y las cuentas, gestiona promociones y campañas, pero no puede cambiar cuentas ni pagos). La base de datos comprueba cada permiso.
+- En la app, **Mi cuenta → Invita a tus amigos** muestra el enlace personal, el botón de WhatsApp y el campo para canjear códigos.
+- Pruebas: `pruebas/gestor-comercial.html` (todo en verde).

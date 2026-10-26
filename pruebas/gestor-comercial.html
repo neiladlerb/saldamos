@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pruebas · gestor-comercial.js</title>
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; margin: 24px; background: #f5f9f6; color: #10241c; }
+  .ok { color: #12804a; } .mal { color: #c43a31; font-weight: 600; }
+  #resumen { font-size: 1.2rem; font-weight: 700; }
+</style>
+</head>
+<body>
+<!-- Pruebas de las reglas del gestor comercial (js/gestor-comercial.js). Todo debe salir en verde. -->
+<h1>Pruebas de js/gestor-comercial.js</h1>
+<p id="resumen">Ejecutando…</p>
+<ul id="lista"></ul>
+<script src="../js/reparto.js"></script>
+<script src="../js/gestor-comercial.js"></script>
+<script>
+(function () {
+  const G = window.GestorComercial, lista = document.getElementById("lista");
+  let bien = 0, mal = 0;
+  function prueba(nombre, fn) {
+    const li = document.createElement("li");
+    try { fn(); li.className = "ok"; li.textContent = "✔ " + nombre; bien++; } catch (e) { li.className = "mal"; li.textContent = "✘ " + nombre + " → " + e.message; mal++; }
+    lista.appendChild(li);
+  }
+  function si(c, m) { if (!c) throw new Error(m || "no se cumple"); }
+  const hace = function (d) { return new Date(Date.now() - d * 86400000).toISOString(); };
+  const us = [
+    { id: "a", estado: "activo", plan: "gratis", ultimo_acceso: hace(1), creado: hace(10), email_confirmado: true, n_invitados: 2 },
+    { id: "b", estado: "activo", plan: "gratis", ultimo_acceso: hace(40), creado: hace(60), email_confirmado: true },
+    { id: "c", estado: "activo", plan: "premium", ultimo_acceso: hace(2), creado: hace(90), email_confirmado: true },
+    { id: "d", estado: "cancelada", plan: "gratis", ultimo_acceso: hace(1), creado: hace(5), email_confirmado: true },
+    { id: "e", estado: "activo", plan: "gratis", premium_hasta: new Date(Date.now() + 3 * 86400000).toISOString(), ultimo_acceso: hace(1), creado: hace(20), email_confirmado: false }
+  ];
+  const neg = { activas: 4, gratis_activos_7d: 2, inactivos_30d: 1, n_pendientes: 1, n_fallidos: 0, pendiente: 299, empresas: 0, sin_confirmar: 1, invitadores: 1, invitados: 2, nuevos_30d: 3 };
+  const ids = function (l) { return l.map(function (u) { return u.id; }).join(","); };
+
+  prueba("Las cuentas canceladas no entran en ningún segmento", function () { si(ids(G.segmento(us, "todos")) === "a,b,c,e", ids(G.segmento(us, "todos"))); });
+  prueba("Gratis activos: solo Gratis que han entrado en 7 días", function () { si(ids(G.segmento(us, "gratis_activos")) === "a,e"); });
+  prueba("Gratis excluye a quien tiene Premium por promoción", function () { si(ids(G.segmento(us, "gratis")) === "a,b"); });
+  prueba("Inactivos: más de 30 días sin entrar", function () { si(ids(G.segmento(us, "inactivos")) === "b"); });
+  const pr = G.propuestas({ negocio: neg, usuarios: us, promociones: [], campanas: [], hoy: new Date(2026, 8, 15) });
+  const claves = pr.map(function (p) { return p.clave; });
+  prueba("Sin promoción de invitación propone lanzarla con INVITA30", function () { const p = pr.find(function (x) { return x.clave === "invitar"; }); si(p && p.promo.codigo === "INVITA30"); });
+  prueba("Con pagos pendientes propone recuperar cobros", function () { si(claves.indexOf("cobros") !== -1); });
+  prueba("Premium regalado que caduca en 7 días → propuesta de retención", function () { si(claves.indexOf("retener") !== -1); });
+  prueba("En septiembre la temporada es la vuelta al cole", function () { si(pr.some(function (p) { return /Vuelta al cole/.test(p.titulo); })); });
+  prueba("Las propuestas salen ordenadas por prioridad", function () { for (let i = 1; i < pr.length; i++) si(pr[i - 1].prioridad <= pr[i].prioridad); });
+  prueba("Una propuesta ya creada como campaña no se repite", function () {
+    const otra = G.propuestas({ negocio: neg, usuarios: us, promociones: [], campanas: [{ nombre: pr[0].titulo, estado: "en_curso" }], hoy: new Date(2026, 8, 15) });
+    si(!otra.some(function (p) { return p.titulo === pr[0].titulo; }));
+  });
+  prueba("Ningún texto menciona IA", function () { si(!pr.some(function (p) { return /\bIA\b/.test(p.titulo + p.mensaje + p.motivo); })); });
+  prueba("La actividad de la semana incluye revisar cobros cuando hay pendientes", function () { si(G.actividad({ negocio: neg }).some(function (a) { return a.clave === "cobros"; })); });
+
+  document.getElementById("resumen").textContent = mal ? (mal + " fallan de " + (bien + mal)) : ("Todo bien: " + bien + " pruebas");
+  document.getElementById("resumen").className = mal ? "mal" : "ok";
+})();
+</script>
+</body>
+</html>

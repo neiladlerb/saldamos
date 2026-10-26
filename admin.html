@@ -16,290 +16,225 @@
 </head>
 <body>
 <!-- =====================================================================
-     BACK OFFICE · solo para usuarios con rol "admin".
-     Ojo: esconder esta página no es la seguridad. La seguridad está en la
-     base de datos: las funciones admin_* rechazan a quien no es admin.
+     BACK OFFICE · administradores y gestores comerciales.
+      · Administrador: todo (crear, cancelar y borrar cuentas, planes,
+        roles, pagos, promociones, campañas y sugerencias).
+      · Comercial: resumen del negocio, usuarios (solo ver), pagos (solo
+        ver), promociones y gestor comercial.
+     Ojo: esconder botones no es la seguridad. La seguridad está en la
+     base de datos (10_backoffice.sql) y en /api/admin-usuarios.
      Por privacidad, aquí NO se ven las tareas ni los gastos de nadie.
      ===================================================================== -->
-<main class="libreta ancho">
+<main class="libreta ancho bo">
   <div class="barra-sup">
     <a class="marca" href="app.html"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect class="l1" x="6" y="6" width="52" height="52" rx="16"/><path class="l3" d="M19 33l9 9 18-20"/></svg>saldamos · Back office</a>
-    <div class="usuario"><span id="yo"></span> <a href="app.html">Ir a la app</a></div>
+    <div class="usuario"><span id="yo"></span> <span class="estado admin" id="mi-rol" hidden></span> <a href="app.html">Ir a la app</a></div>
   </div>
 
   <p class="mensaje mal" id="sin-permiso" hidden>No tienes permiso para ver el back office.</p>
 
-  <div id="contenido" hidden style="display:grid; gap:20px">
-    <h1>Panel de <span>gestión</span></h1>
+  <div id="contenido" hidden class="bo-contenido">
+    <nav class="pestanas" role="tablist" aria-label="Secciones del back office">
+      <button type="button" role="tab" data-bo="resumen" aria-selected="true">Resumen</button>
+      <button type="button" role="tab" data-bo="usuarios" aria-selected="false">Usuarios</button>
+      <button type="button" role="tab" data-bo="pagos" aria-selected="false">Pagos</button>
+      <button type="button" role="tab" data-bo="promociones" aria-selected="false">Promociones</button>
+      <button type="button" role="tab" data-bo="comercial" aria-selected="false">Gestor comercial</button>
+      <button type="button" role="tab" data-bo="sugerencias" aria-selected="false" data-solo-admin>Sugerencias</button>
+    </nav>
+    <p class="mensaje" id="msg" hidden role="status"></p>
 
-    <div class="cifras cuatro">
-      <div class="cifra"><small>Usuarios</small><b id="k-usuarios">–</b></div>
-      <div class="cifra positivo"><small>Altas últimos 7 días</small><b id="k-nuevos">–</b></div>
-      <div class="cifra"><small>Activos últimos 7 días</small><b id="k-activos">–</b></div>
-      <div class="cifra negativo"><small>Bloqueados</small><b id="k-bloqueados">–</b></div>
-    </div>
-    <p class="ayuda" style="margin:0" id="k-extra"></p>
-
-    <section class="grafico">
-      <h2>Altas de los últimos 30 días</h2>
-      <svg id="grafico-altas" viewBox="0 0 600 122" preserveAspectRatio="none" role="img" aria-label="Altas por día"></svg>
-      <div id="eje-grafico" style="display:flex; justify-content:space-between; gap:8px; font-size:.78rem; color:var(--suave); margin-top:6px"></div>
+    <!-- ============ RESUMEN ============ -->
+    <section class="bo-panel" id="bo-resumen">
+      <h1>Resumen del <span>negocio</span></h1>
+      <div class="cifras cuatro">
+        <div class="cifra"><small>Cuentas activas</small><b id="k-activas">–</b></div>
+        <div class="cifra"><small>Gratis</small><b id="k-gratis">–</b></div>
+        <div class="cifra positivo"><small>Premium de pago</small><b id="k-premium">–</b></div>
+        <div class="cifra"><small>Empresas (cuentas)</small><b id="k-empresa">–</b></div>
+      </div>
+      <div class="cifras cuatro">
+        <div class="cifra positivo"><small>Ingresos este mes</small><b id="k-ingresos">–</b></div>
+        <div class="cifra negativo"><small>Pendiente de cobro</small><b id="k-pendiente">–</b></div>
+        <div class="cifra"><small>Premium por promoción</small><b id="k-promo">–</b></div>
+        <div class="cifra"><small>Invitados por amigos</small><b id="k-invitados">–</b></div>
+      </div>
+      <section class="tarjeta">
+        <h2>Cuentas por plan</h2>
+        <div class="barra-planes" id="barra-planes" role="img" aria-label="Reparto de cuentas por plan"></div>
+        <div class="leyenda-planes" id="leyenda-planes"></div>
+        <p class="ayuda" style="margin:0" id="k-extra"></p>
+      </section>
+      <section class="grafico tarjeta">
+        <h2>Altas de los últimos 30 días</h2>
+        <svg id="grafico-altas" viewBox="0 0 600 122" preserveAspectRatio="none" role="img" aria-label="Altas por día"></svg>
+        <div id="eje-grafico" class="eje-grafico"></div>
+      </section>
     </section>
 
-    <div class="fila-titulo">
-      <h2>Usuarios</h2>
-      <button type="button" class="boton-sec" id="b-csv">Descargar CSV</button>
-    </div>
-    <div class="filtros">
-      <input type="search" id="buscar" placeholder="Buscar por nombre o email" aria-label="Buscar">
-      <select class="filtro" id="filtro" aria-label="Filtrar">
-        <option value="todos">Todos</option>
-        <option value="activo">Activos</option>
-        <option value="bloqueado">Bloqueados</option>
-        <option value="admin">Administradores</option>
-        <option value="sin-confirmar">Email sin confirmar</option>
-      </select>
-    </div>
-    <div class="tabla-caja">
-      <table>
-        <thead>
-          <tr><th>Usuario</th><th>Estado</th><th>Alta</th><th>Último acceso</th><th class="num">Tareas</th><th class="num">Gastos</th><th>Acciones</th></tr>
-        </thead>
-        <tbody id="filas"><tr><td colspan="7" class="cargando">Cargando…</td></tr></tbody>
-      </table>
-    </div>
-    <p class="mensaje" id="msg" hidden></p>
+    <!-- ============ USUARIOS ============ -->
+    <section class="bo-panel" id="bo-usuarios" hidden>
+      <div class="fila-titulo">
+        <h2>Usuarios</h2>
+        <div class="botones">
+          <button type="button" class="anadir" id="b-nueva-cuenta" data-solo-admin>+ Crear cuenta</button>
+          <button type="button" class="boton-sec" id="b-csv">Descargar CSV</button>
+        </div>
+      </div>
+      <form class="tarjeta form-bo" id="form-cuenta" hidden novalidate>
+        <h3>Crear cuenta</h3>
+        <p class="ayuda">La persona recibe un email para elegir su contraseña.</p>
+        <label>Email <input type="email" id="c-email" required autocomplete="off"></label>
+        <label>Nombre <input type="text" id="c-nombre" autocomplete="off"></label>
+        <label>Plan <select id="c-plan"><option value="gratis">Gratis</option><option value="premium">Premium</option><option value="empresa">Empresas</option></select></label>
+        <label id="c-empresa-l" hidden>Empresa <input type="text" id="c-empresa" autocomplete="off"></label>
+        <label>Rol <select id="c-rol"><option value="usuario">Usuario</option><option value="comercial">Comercial</option><option value="admin">Administrador</option></select></label>
+        <div class="botones"><button class="anadir" type="submit">Crear y enviar invitación</button><button class="boton-sec" type="button" id="c-cancelar">Cancelar</button></div>
+      </form>
+      <div class="filtros">
+        <input type="search" id="buscar" placeholder="Buscar por nombre, email o empresa" aria-label="Buscar">
+        <select class="filtro" id="filtro-plan" aria-label="Filtrar por plan">
+          <option value="">Todos los planes</option><option value="gratis">Gratis</option><option value="premium">Premium</option><option value="promo">Premium por promoción</option><option value="empresa">Empresas</option>
+        </select>
+        <select class="filtro" id="filtro" aria-label="Filtrar por estado">
+          <option value="todos">Todos los estados</option><option value="activo">Activas</option><option value="cancelada">Canceladas</option><option value="bloqueado">Bloqueadas</option>
+          <option value="admin">Administradores</option><option value="comercial">Comerciales</option><option value="sin-confirmar">Email sin confirmar</option>
+        </select>
+      </div>
+      <p class="ayuda" id="u-resumen" style="margin:0"></p>
+      <div class="tabla-caja">
+        <table>
+          <thead><tr><th>Usuario</th><th>Plan</th><th>Estado</th><th>Alta</th><th>Último acceso</th><th class="num">Invitados</th><th class="num">Pagado</th><th>Acciones</th></tr></thead>
+          <tbody id="filas"><tr><td colspan="8" class="cargando">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
 
-    <div class="fila-titulo">
-      <h2>Sugerencias de los usuarios</h2>
-      <select class="filtro" id="filtro-sug" aria-label="Filtrar sugerencias">
-        <option value="nueva">Nuevas</option><option value="revisada">Revisadas</option><option value="en lab">En el lab</option>
-        <option value="descartada">Descartadas</option><option value="">Todas</option>
-      </select>
-    </div>
-    <p class="ayuda" style="margin:0" id="sug-resumen"></p>
-    <div class="tabla-caja">
-      <table>
-        <thead><tr><th>Fecha</th><th>Tipo</th><th>Valoración</th><th>Comentario</th><th>Usuario</th><th>Estado</th></tr></thead>
-        <tbody id="filas-sug"><tr><td colspan="6" class="cargando">Cargando…</td></tr></tbody>
-      </table>
-    </div>
+    <!-- ============ PAGOS ============ -->
+    <section class="bo-panel" id="bo-pagos" hidden>
+      <div class="fila-titulo">
+        <h2>Pagos</h2>
+        <button type="button" class="anadir" id="b-nuevo-pago" data-solo-admin>+ Registrar pago</button>
+      </div>
+      <div class="cifras cuatro">
+        <div class="cifra positivo"><small>Cobrado este mes</small><b id="p-mes">–</b></div>
+        <div class="cifra"><small>Cobrado últimos 30 días</small><b id="p-30">–</b></div>
+        <div class="cifra negativo"><small>Pendiente</small><b id="p-pend">–</b></div>
+        <div class="cifra negativo"><small>Fallidos (30 días)</small><b id="p-fall">–</b></div>
+      </div>
+      <form class="tarjeta form-bo" id="form-pago" hidden novalidate>
+        <h3>Registrar pago</h3>
+        <label>Cuenta <input type="text" id="pg-usuario" list="lista-emails" placeholder="email de la cuenta" autocomplete="off" required></label>
+        <datalist id="lista-emails"></datalist>
+        <label>Plan <select id="pg-plan"><option value="premium">Premium</option><option value="empresa">Empresas</option></select></label>
+        <label>Importe (€) <input type="text" id="pg-importe" inputmode="decimal" placeholder="2,99" required></label>
+        <label>Método <select id="pg-metodo"><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option><option value="bizum">Bizum</option><option value="domiciliacion">Domiciliación</option><option value="otro">Otro</option></select></label>
+        <label>Estado <select id="pg-estado"><option value="pagado">Pagado</option><option value="pendiente">Pendiente</option><option value="fallido">Fallido</option></select></label>
+        <label>Desde <input type="date" id="pg-inicio" required></label>
+        <label>Hasta <input type="date" id="pg-fin"></label>
+        <label>Referencia <input type="text" id="pg-ref" maxlength="120" placeholder="nº de factura o recibo" autocomplete="off"></label>
+        <div class="botones"><button class="anadir" type="submit">Guardar pago</button><button class="boton-sec" type="button" id="pg-cancelar">Cancelar</button></div>
+      </form>
+      <div class="filtros">
+        <select class="filtro" id="filtro-pago" aria-label="Filtrar pagos">
+          <option value="">Todos</option><option value="pagado">Pagados</option><option value="pendiente">Pendientes</option><option value="fallido">Fallidos</option><option value="reembolsado">Reembolsados</option>
+        </select>
+      </div>
+      <div class="tabla-caja">
+        <table>
+          <thead><tr><th>Fecha</th><th>Cuenta</th><th>Plan</th><th class="num">Importe</th><th>Método</th><th>Periodo</th><th>Estado</th></tr></thead>
+          <tbody id="filas-pagos"><tr><td colspan="7" class="cargando">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ PROMOCIONES ============ -->
+    <section class="bo-panel" id="bo-promociones" hidden>
+      <div class="fila-titulo">
+        <h2>Promociones</h2>
+        <button type="button" class="anadir" id="b-nueva-promo">+ Nueva promoción</button>
+      </div>
+      <p class="ayuda" style="margin:0">«Invita a tus amigos» usa la promoción de tipo <b>Invitación</b> activa más reciente: al registrarse un amigo con el enlace de alguien, los dos reciben los días de Premium indicados. Los demás códigos se canjean en la app, en Mi cuenta → Invita a tus amigos → «¿Tienes un código?».</p>
+      <form class="tarjeta form-bo" id="form-promo" hidden novalidate>
+        <h3>Nueva promoción</h3>
+        <label>Nombre <input type="text" id="pr-nombre" maxlength="120" required placeholder="Verano: 30 días de Premium"></label>
+        <label>Código <input type="text" id="pr-codigo" maxlength="24" required placeholder="VERANO26" autocomplete="off"></label>
+        <label>Tipo <select id="pr-tipo"><option value="invitacion">Invitación (invita a tus amigos)</option><option value="premium_gratis">Premium gratis</option><option value="descuento">Descuento</option></select></label>
+        <label id="pr-dias-l">Días de Premium <input type="number" id="pr-dias" min="0" max="365" value="30"></label>
+        <label id="pr-dias-inv-l">Días para quien invita <input type="number" id="pr-dias-inv" min="0" max="365" value="30"></label>
+        <label id="pr-desc-l" hidden>Descuento (%) <input type="number" id="pr-desc" min="1" max="100" value="20"></label>
+        <label>Desde <input type="date" id="pr-inicio" required></label>
+        <label>Hasta (opcional) <input type="date" id="pr-fin"></label>
+        <label>Usos máximos (opcional) <input type="number" id="pr-max" min="1"></label>
+        <div class="botones"><button class="anadir" type="submit">Crear promoción</button><button class="boton-sec" type="button" id="pr-cancelar">Cancelar</button></div>
+      </form>
+      <div class="tabla-caja">
+        <table>
+          <thead><tr><th>Código</th><th>Promoción</th><th>Beneficio</th><th>Vigencia</th><th class="num">Usos</th><th>Estado</th></tr></thead>
+          <tbody id="filas-promos"><tr><td colspan="6" class="cargando">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ GESTOR COMERCIAL ============ -->
+    <section class="bo-panel" id="bo-comercial" hidden>
+      <h2>Gestor comercial</h2>
+      <p class="ayuda" style="margin:0">Propuestas a partir de los datos de hoy y de la época del año. Con «Crear campaña» pasan a la lista de campañas como propuesta; desde ahí se aprueban, se lanzan y se cierran.</p>
+      <div class="propuestas" id="propuestas"></div>
+
+      <section class="tarjeta">
+        <div class="fila-titulo"><h2>Actividad comercial de esta semana</h2><span class="ayuda" id="act-progreso"></span></div>
+        <ul class="actividad" id="actividad"></ul>
+      </section>
+
+      <div class="fila-titulo">
+        <h2>Campañas</h2>
+        <div class="botones">
+          <select class="filtro" id="filtro-camp" aria-label="Filtrar campañas">
+            <option value="vivas">Propuestas y en marcha</option><option value="">Todas</option><option value="terminada">Terminadas</option><option value="descartada">Descartadas</option>
+          </select>
+          <button type="button" class="boton-sec" id="b-nueva-camp">+ Campaña manual</button>
+        </div>
+      </div>
+      <form class="tarjeta form-bo" id="form-camp" hidden novalidate>
+        <h3>Nueva campaña</h3>
+        <label>Nombre <input type="text" id="cp-nombre" maxlength="160" required></label>
+        <label>A quién <select id="cp-segmento"></select></label>
+        <label>Canal <select id="cp-canal"></select></label>
+        <label>Promoción (opcional) <select id="cp-promo"><option value="">Sin promoción</option></select></label>
+        <label class="ancho-total">Mensaje <textarea id="cp-mensaje" rows="3" maxlength="2000"></textarea></label>
+        <label class="ancho-total">Objetivo <input type="text" id="cp-objetivo" maxlength="300" placeholder="p. ej. 20 cuentas nuevas en 2 semanas"></label>
+        <div class="botones"><button class="anadir" type="submit">Guardar campaña</button><button class="boton-sec" type="button" id="cp-cancelar">Cancelar</button></div>
+      </form>
+      <div class="campanas" id="campanas"></div>
+    </section>
+
+    <!-- ============ SUGERENCIAS ============ -->
+    <section class="bo-panel" id="bo-sugerencias" hidden>
+      <div class="fila-titulo">
+        <h2>Sugerencias de los usuarios</h2>
+        <select class="filtro" id="filtro-sug" aria-label="Filtrar sugerencias">
+          <option value="nueva">Nuevas</option><option value="revisada">Revisadas</option><option value="en lab">En el lab</option>
+          <option value="descartada">Descartadas</option><option value="">Todas</option>
+        </select>
+      </div>
+      <p class="ayuda" style="margin:0" id="sug-resumen"></p>
+      <div class="tabla-caja">
+        <table>
+          <thead><tr><th>Fecha</th><th>Tipo</th><th>Valoración</th><th>Comentario</th><th>Usuario</th><th>Estado</th></tr></thead>
+          <tbody id="filas-sug"><tr><td colspan="6" class="cargando">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
   </div>
 </main>
 
 <script src="js/config.js"></script>
 <script src="js/arranque.js"></script>
 <script src="js/comun.js"></script>
-<script>
-  let usuarios = [];
-  let miId = null;
-
-  function fecha(t) { return t ? new Date(t).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" }) : "—"; }
-  function mensaje(texto, ok) {
-    const p = document.getElementById("msg");
-    p.textContent = texto; p.className = "mensaje " + (ok ? "ok" : "mal"); p.hidden = false;
-    setTimeout(function () { p.hidden = true; }, 4000);
-  }
-
-  // --- Arranque: ¿hay sesión y es admin? ---
-  (async function () {
-    const s = await exigirSesion(); if (!s) return;
-    miId = s.user.id;
-    const perfil = await miPerfil();
-    document.getElementById("yo").textContent = s.user.email;
-    if (!perfil || perfil.rol !== "admin" || perfil.estado !== "activo") {
-      document.getElementById("sin-permiso").hidden = false;
-      return;
-    }
-    document.getElementById("contenido").hidden = false;
-    await Promise.all([cargarEstadisticas(), cargarUsuarios()]);
-    await cargarSugerencias();
-  })();
-
-  // --- Sugerencias de los usuarios (alimentan el Lab de producto) ---
-  let sugerencias = [];
-  const TIPOS_SUG = { idea: "Idea", problema: "Problema", elogio: "Elogio", pregunta: "Pregunta" };
-  async function cargarSugerencias() {
-    const { data, error } = await sb.from("sugerencias").select("*");
-    if (error) return mensaje(traducirError(error));
-    sugerencias = data.sort(function (a, b) { return String(b.creado).localeCompare(String(a.creado)); });
-    pintarSugerencias();
-  }
-  function pintarSugerencias() {
-    const f = document.getElementById("filtro-sug").value;
-    const conNota = sugerencias.filter(function (x) { return x.puntuacion; });
-    const media = conNota.length ? (conNota.reduce(function (s, x) { return s + x.puntuacion; }, 0) / conNota.length).toFixed(1).replace(".", ",") : "—";
-    document.getElementById("sug-resumen").textContent = sugerencias.length + " sugerencias · " +
-      sugerencias.filter(function (x) { return x.estado === "nueva"; }).length + " nuevas · valoración media " + media + " / 5";
-    const tb = document.getElementById("filas-sug"); tb.innerHTML = "";
-    const lista = sugerencias.filter(function (x) { return !f || x.estado === f; });
-    if (!lista.length) { tb.innerHTML = '<tr><td colspan="6" class="cargando">No hay sugerencias con este filtro.</td></tr>'; return; }
-    const emails = {}; usuarios.forEach(function (u) { emails[u.id] = u.email; });
-    lista.forEach(function (x) {
-      const tr = document.createElement("tr");
-      const td = function (t, c) { const d = document.createElement("td"); if (c) d.className = c; if (t instanceof Node) d.appendChild(t); else d.textContent = t; tr.appendChild(d); };
-      td(fecha(x.creado));
-      td(TIPOS_SUG[x.tipo] || x.tipo);
-      td(x.puntuacion ? "★".repeat(x.puntuacion) : "—");
-      td(x.texto + (x.pagina ? " · (" + x.pagina + ")" : ""), "texto-sugerencia");
-      td(emails[x.user_id] || "—");
-      const sel = document.createElement("select"); sel.className = "filtro"; sel.setAttribute("aria-label", "Estado de la sugerencia");
-      ["nueva", "revisada", "en lab", "descartada"].forEach(function (e) { const o = document.createElement("option"); o.value = e; o.textContent = e.charAt(0).toUpperCase() + e.slice(1); sel.appendChild(o); });
-      sel.value = x.estado;
-      sel.addEventListener("change", async function () {
-        const { error } = await sb.from("sugerencias").update({ estado: sel.value }).eq("id", x.id);
-        if (error) return mensaje(traducirError(error));
-        x.estado = sel.value; pintarSugerencias();
-      });
-      td(sel);
-      document.getElementById("filas-sug").appendChild(tr);
-    });
-  }
-  document.getElementById("filtro-sug").addEventListener("change", pintarSugerencias);
-
-  // --- Estadísticas ---
-  async function cargarEstadisticas() {
-    const { data, error } = await sb.rpc("admin_estadisticas");
-    if (error) return mensaje(traducirError(error));
-    document.getElementById("k-usuarios").textContent = data.usuarios;
-    document.getElementById("k-nuevos").textContent = data.nuevos_7d;
-    document.getElementById("k-activos").textContent = data.activos_7d;
-    document.getElementById("k-bloqueados").textContent = data.bloqueados;
-    document.getElementById("k-extra").textContent =
-      data.nuevos_30d + " altas en 30 días · " + data.sin_confirmar + " sin confirmar el email · " +
-      data.tareas + " tareas y " + data.gastos + " gastos guardados en total";
-    pintarGrafico(data.altas_por_dia || []);
-  }
-
-  // Gráfico de barras: una por día de los últimos 30
-  function pintarGrafico(altas) {
-    const svg = document.getElementById("grafico-altas");
-    const porDia = {};
-    altas.forEach(function (a) { porDia[a.dia] = a.n; });
-    const dias = [];
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date(); d.setDate(d.getDate() - i);
-      dias.push(d.toISOString().slice(0, 10));
-    }
-    const max = Math.max(1, ...dias.map(function (d) { return porDia[d] || 0; }));
-    const ancho = 600 / dias.length;
-    let html = '<line x1="0" y1="120" x2="600" y2="120" stroke="var(--borde)" />';
-    dias.forEach(function (d, i) {
-      const n = porDia[d] || 0;
-      const h = n / max * 100;
-      html += '<rect x="' + (i * ancho + 2) + '" y="' + (120 - h) + '" width="' + (ancho - 4) + '" height="' + h +
-              '" rx="2" fill="var(--marca)"><title>' + d + ': ' + n + ' altas</title></rect>';
-    });
-    document.getElementById("eje-grafico").textContent = "";
-    const ini = document.createElement("span"); ini.textContent = fecha(dias[0]);
-    const mx = document.createElement("span"); mx.textContent = "Máximo: " + max + " altas/día";
-    const fin = document.createElement("span"); fin.textContent = "Hoy";
-    document.getElementById("eje-grafico").append(ini, mx, fin);
-    svg.innerHTML = html;
-  }
-
-  // --- Usuarios ---
-  async function cargarUsuarios() {
-    const { data, error } = await sb.rpc("admin_listar_usuarios");
-    if (error) return mensaje(traducirError(error));
-    usuarios = data;
-    pintarUsuarios();
-  }
-
-  function filtrados() {
-    const q = document.getElementById("buscar").value.trim().toLowerCase();
-    const f = document.getElementById("filtro").value;
-    return usuarios.filter(function (u) {
-      if (q && (u.email + " " + u.nombre).toLowerCase().indexOf(q) === -1) return false;
-      if (f === "activo") return u.estado === "activo";
-      if (f === "bloqueado") return u.estado === "bloqueado";
-      if (f === "admin") return u.rol === "admin";
-      if (f === "sin-confirmar") return !u.email_confirmado;
-      return true;
-    });
-  }
-
-  function pintarUsuarios() {
-    const tbody = document.getElementById("filas");
-    tbody.innerHTML = "";
-    const lista = filtrados();
-    if (lista.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="cargando">No hay usuarios con ese filtro.</td></tr>';
-      return;
-    }
-    lista.forEach(function (u) {
-      const tr = document.createElement("tr");
-      const celda = function (contenido, clase) { const td = document.createElement("td"); if (clase) td.className = clase; if (contenido instanceof Node) td.appendChild(contenido); else td.textContent = contenido; tr.appendChild(td); return td; };
-
-      const quien = document.createElement("div");
-      const n = document.createElement("strong"); n.textContent = u.nombre || "(sin nombre)";
-      const e = document.createElement("div"); e.className = "g-meta"; e.textContent = u.email;
-      quien.append(n, e);
-      celda(quien);
-
-      const est = document.createElement("div"); est.style.display = "flex"; est.style.gap = "4px"; est.style.flexWrap = "wrap";
-      const chip = function (t, c) { const s = document.createElement("span"); s.className = "estado " + c; s.textContent = t; est.appendChild(s); };
-      chip(u.estado === "activo" ? "Activo" : "Bloqueado", u.estado);
-      if (u.rol === "admin") chip("Admin", "admin");
-      if (!u.email_confirmado) chip("Sin confirmar", "pendiente");
-      celda(est);
-
-      celda(fecha(u.creado));
-      celda(fecha(u.ultimo_acceso));
-      celda(String(u.n_tareas), "num");
-      celda(String(u.n_gastos), "num");
-
-      const acciones = document.createElement("div"); acciones.style.display = "flex"; acciones.style.gap = "6px"; acciones.style.flexWrap = "wrap";
-      if (u.id === miId) {
-        const yo = document.createElement("span"); yo.className = "g-meta"; yo.textContent = "Eres tú";
-        acciones.appendChild(yo);
-      } else {
-        const b1 = document.createElement("button"); b1.className = "boton-sec"; b1.type = "button";
-        b1.textContent = u.estado === "activo" ? "Bloquear" : "Desbloquear";
-        b1.addEventListener("click", function () { cambiar("admin_cambiar_estado", { usuario: u.id, nuevo_estado: u.estado === "activo" ? "bloqueado" : "activo" }, b1); });
-        const b2 = document.createElement("button"); b2.className = "boton-sec"; b2.type = "button";
-        b2.textContent = u.rol === "admin" ? "Quitar admin" : "Hacer admin";
-        b2.addEventListener("click", function () { cambiar("admin_cambiar_rol", { usuario: u.id, nuevo_rol: u.rol === "admin" ? "usuario" : "admin" }, b2); });
-        acciones.append(b1, b2);
-      }
-      celda(acciones);
-      tbody.appendChild(tr);
-    });
-  }
-
-  // Acciones con confirmación de dos pulsaciones
-  async function cambiar(funcion, parametros, boton) {
-    if (!boton.dataset.confirmar) {
-      boton.dataset.original = boton.textContent;
-      boton.dataset.confirmar = "1";
-      boton.textContent = "¿Confirmar?";
-      setTimeout(function () { if (boton.isConnected) { delete boton.dataset.confirmar; boton.textContent = boton.dataset.original; } }, 3000);
-      return;
-    }
-    boton.disabled = true;
-    const { error } = await sb.rpc(funcion, parametros);
-    if (error) { boton.disabled = false; return mensaje(traducirError(error)); }
-    mensaje("Cambio guardado.", true);
-    await Promise.all([cargarEstadisticas(), cargarUsuarios()]);
-  }
-
-  document.getElementById("buscar").addEventListener("input", pintarUsuarios);
-  document.getElementById("filtro").addEventListener("change", pintarUsuarios);
-
-  // Exportar la lista (lo que se ve con el filtro actual) a CSV para Excel
-  document.getElementById("b-csv").addEventListener("click", function () {
-    if (window.MODO_DEMO) { mensaje("En la demo no se descargan archivos. En la versión real se descarga la lista en CSV para Excel."); return; }
-    const cab = ["email", "nombre", "rol", "estado", "email_confirmado", "alta", "ultimo_acceso", "tareas", "gastos"];
-    const esc = function (v) { v = v == null ? "" : String(v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
-    const filas = filtrados().map(function (u) {
-      return [u.email, u.nombre, u.rol, u.estado, u.email_confirmado ? "sí" : "no", u.creado, u.ultimo_acceso, u.n_tareas, u.n_gastos].map(esc).join(";");
-    });
-    const blob = new Blob(["﻿" + cab.join(";") + "\n" + filas.join("\n")], { type: "text/csv;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob); a.download = "usuarios-saldamos.csv";
-    document.body.appendChild(a); a.click(); a.remove();
-  });
-</script>
+<script src="js/reparto.js"></script>
+<script src="js/gestor-comercial.js"></script>
+<script src="js/admin.js"></script>
 <script src="js/pwa.js"></script>
 </body>
 </html>

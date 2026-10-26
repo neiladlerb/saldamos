@@ -238,6 +238,42 @@
     if (previo) S.tpvs[YO] = previo;
     delete S.tpv;
   }
+  // Back office comercial (10_backoffice.sql): planes, pagos, promociones, invitaciones y campañas de ejemplo
+  function codigo() { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let c = ""; for (let i = 0; i < 8; i++) c += a[Math.floor(Math.random() * a.length)]; return c; }
+  if (!S.version10) {
+    const planes = ["gratis", "gratis", "premium", "gratis", "empresa", "gratis", "gratis", "premium", "gratis", "empresa", "gratis", "gratis", "premium", "gratis", "gratis", "empresa", "gratis", "gratis"];
+    const empresas = ["Ferretería Norte S.L.", "Clínica Dental Sol", "Ferretería Norte S.L."];
+    let ne = 0;
+    S.usuarios.forEach(function (u, i) {
+      if (!u.codigo_invitacion) u.codigo_invitacion = codigo();
+      if (u.id === YO) return;
+      if (!u.plan) u.plan = planes[(i - 1) % planes.length] || "gratis";
+      if (u.plan === "empresa" && !u.empresa) u.empresa = empresas[ne++ % empresas.length];
+      if (i % 6 === 2) u.invitado_por = YO;
+      if (i === 11) u.estado = "cancelada";
+    });
+    const pago = function (u, plan, imp, dias, estado, metodo) {
+      const d = new Date(Date.now() - dias * 86400000).toISOString();
+      return { id: id(), user_id: u, plan: plan, concepto: plan === "empresa" ? "Plan Empresas · mes" : "Premium · mes", importe: imp,
+        periodo_inicio: d.slice(0, 10), periodo_fin: null, metodo: metodo || "tarjeta", estado: estado, referencia: "", creado: d, creado_por: YO };
+    };
+    S.pagos = [];
+    S.usuarios.forEach(function (u, i) {
+      if (u.plan === "premium") { S.pagos.push(pago(u.id, "premium", 299, 3 + i, "pagado"), pago(u.id, "premium", 299, 33 + i, "pagado")); }
+      if (u.plan === "empresa" && u.id !== YO) S.pagos.push(pago(u.id, "empresa", 150, 5 + i, i % 2 ? "pagado" : "pendiente", "transferencia"));
+    });
+    if (S.pagos.length) S.pagos[0].estado = "fallido";
+    const hoy = new Date().toISOString().slice(0, 10);
+    S.promociones = [
+      { id: "pr-invita", codigo: "INVITA30", nombre: "Invita a tus amigos: 30 días de Premium para los dos", tipo: "invitacion", dias_premium: 30, dias_premium_invitador: 30, descuento_pct: 0, inicio: hoy, fin: null, max_usos: null, usos: 3, activa: true, creado: hace(20) },
+      { id: "pr-bienvenida", codigo: "BIENVENIDA", nombre: "Bienvenida: 14 días de Premium", tipo: "premium_gratis", dias_premium: 14, dias_premium_invitador: 0, descuento_pct: 0, inicio: hoy, fin: null, max_usos: 500, usos: 12, activa: true, creado: hace(15) }
+    ];
+    S.canjes = [];
+    S.campanas = [
+      { id: id(), nombre: "Invita a tus amigos (lanzamiento)", segmento: "todos", canal: "en_app", mensaje: "Invita a tus amigos y tenéis 30 días de Premium gratis los dos.", motivo: "Lanzamiento del programa de invitaciones.", objetivo: "50 cuentas nuevas invitadas este mes", promocion_id: "pr-invita", estado: "en_curso", origen: "manual", alcance: S.usuarios.length, inicio: hoy, fin: null, creado: hace(20), creado_por: YO }
+    ];
+    S.version10 = true;
+  }
   function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(S)); } catch (e) {} }
   S.tareas.forEach(function (t) { if (!t.token) t.token = (id() + id()).replace(/[^a-z0-9]/g, "").slice(-14); });
   guardar();
@@ -249,6 +285,7 @@
   const yoId = function () { return S.sesion ? S.sesion.user.id : YO; };
   const yoUser = function () { return S.usuarios.find(function (u) { return u.id === yoId(); }); };
   const esAdmin = function () { const u = yoUser(); return !!u && u.rol === "admin"; };
+  const esComercial = function () { const u = yoUser(); return !!u && (u.rol === "admin" || u.rol === "comercial") && u.estado === "activo"; };
 
   // La demo no tiene servidor: la contraseña se guarda resumida (SHA-256), nunca tal cual
   function resumen(texto) {
@@ -286,11 +323,16 @@
       if (tabla === "perfiles") {
         const u = yoUser();
         if (op === "update") { if (datos && "ingresos_mensuales" in datos) u.ingresos_mensuales = datos.ingresos_mensuales; guardar(); return { data: null, error: null }; }
-        return { data: { id: u.id, email: u.email, nombre: u.nombre, rol: u.rol, estado: u.estado, creado: u.creado, acepta_privacidad_en: u.creado, ingresos_mensuales: u.ingresos_mensuales == null ? null : u.ingresos_mensuales, plan: u.plan || "gratis" }, error: null };
+        return { data: { id: u.id, email: u.email, nombre: u.nombre, rol: u.rol, estado: u.estado, creado: u.creado, acepta_privacidad_en: u.creado, ingresos_mensuales: u.ingresos_mensuales == null ? null : u.ingresos_mensuales, plan: u.plan || "gratis", empresa: u.empresa || null, premium_hasta: u.premium_hasta || null, codigo_invitacion: u.codigo_invitacion || null }, error: null };
       }
+      if (!S[tabla]) S[tabla] = [];
       const filas = S[tabla];
+      // Tablas del negocio: las ve el equipo comercial (los pagos, además, cada usuario los suyos)
+      const NEGOCIO = { pagos: 1, promociones: 1, campanas: 1, canjes: 1 };
+      if (NEGOCIO[tabla] && !esComercial() && (op !== "select" || tabla === "promociones" || tabla === "campanas")) return { data: null, error: { message: "No autorizado" } };
+      if (tabla === "pagos" && op !== "select" && !esAdmin()) return { data: null, error: { message: "No autorizado" } };
       // En "sugerencias" el usuario de la demo es administrador: ve todas
-      const cumple = function (f) { return ((tabla === "sugerencias" && esAdmin()) || f.user_id === yoId()) && filtros.every(function (x) { return f[x[0]] === x[1]; }); };
+      const cumple = function (f) { return ((tabla === "sugerencias" && esAdmin()) || (NEGOCIO[tabla] && esComercial()) || f.user_id === yoId()) && filtros.every(function (x) { return f[x[0]] === x[1]; }); };
       if (op === "select") { const r = filas.filter(cumple).map(copia); return { data: uno ? (r[0] || null) : r, error: null }; }
       if (op === "insert") {
         const lista = Array.isArray(datos) ? datos : [datos];
@@ -398,6 +440,27 @@
     const yo = yoUser();
     const mias = function (lista) { return (lista || []).filter(function (f) { return f.user_id === yo.id; }).length; };
     yo.n_tareas = mias(S.tareas); yo.n_gastos = mias(S.gastos);
+    // Invitar a amigos y canjear códigos (cualquier usuario)
+    const promoInvitacion = function () {
+      const hoy = new Date().toISOString().slice(0, 10);
+      return (S.promociones || []).filter(function (p) { return p.tipo === "invitacion" && p.activa && p.inicio <= hoy && (!p.fin || p.fin >= hoy) && (!p.max_usos || p.usos < p.max_usos); })
+        .sort(function (x, y) { return String(y.creado).localeCompare(String(x.creado)); })[0] || null;
+    };
+    if (nombre === "mi_invitacion") {
+      if (!yo.codigo_invitacion) { yo.codigo_invitacion = codigo(); guardar(); }
+      const p = promoInvitacion();
+      return espera({ data: { codigo: yo.codigo_invitacion, invitados: S.usuarios.filter(function (u) { return u.invitado_por === yo.id; }).length, premium_hasta: yo.premium_hasta || null,
+        promo: p ? { nombre: p.nombre, dias: p.dias_premium, dias_invitador: p.dias_premium_invitador, fin: p.fin } : null }, error: null });
+    }
+    if (nombre === "canjear_codigo") {
+      const hoy = new Date().toISOString().slice(0, 10);
+      const p = (S.promociones || []).find(function (x) { return x.codigo === String(a.codigo || "").trim().toUpperCase() && x.tipo !== "invitacion" && x.activa && x.inicio <= hoy && (!x.fin || x.fin >= hoy) && (!x.max_usos || x.usos < x.max_usos); });
+      if (!p) return espera({ data: null, error: { message: "Código no válido o caducado" } });
+      if (S.canjes.some(function (c) { return c.promocion_id === p.id && c.user_id === yo.id; })) return espera({ data: null, error: { message: "Ya has usado este código" } });
+      S.canjes.push({ id: id(), promocion_id: p.id, user_id: yo.id, invitador_id: null, creado: new Date().toISOString() }); p.usos++;
+      if (p.dias_premium) yo.premium_hasta = new Date(Math.max(Date.now(), Date.parse(yo.premium_hasta || 0) || 0) + p.dias_premium * 86400000).toISOString();
+      guardar(); return espera({ data: { nombre: p.nombre, dias: p.dias_premium, descuento: p.descuento_pct }, error: null });
+    }
     const tpv = S.tpvs[yo.id];
     if (nombre === "mi_tpv") return espera({ data: tpv ? { comercio: tpv.comercio, terminal: tpv.terminal, entorno: tpv.entorno, activo: tpv.activo, clave_fin: tpv.clave.slice(-4), actualizado: tpv.actualizado } : null, error: null });
     if (nombre === "guardar_tpv") {
@@ -407,7 +470,8 @@
     }
     if (nombre === "borrar_tpv") { delete S.tpvs[yo.id]; guardar(); return espera({ data: null, error: null }); }
     // El back office solo es para administradores (como en la versión real)
-    if (nombre.indexOf("admin_") === 0 && !esAdmin()) return espera({ data: null, error: { message: "No autorizado" } });
+    const SOLO_LEER = { admin_negocio: 1, admin_listar_usuarios: 1, admin_estadisticas: 1 };   // el rol comercial puede consultarlas
+    if (nombre.indexOf("admin_") === 0 && !(esAdmin() || (SOLO_LEER[nombre] && esComercial()))) return espera({ data: null, error: { message: "No autorizado" } });
     if (nombre === "admin_estadisticas") {
       const n = function (f) { return S.usuarios.filter(f).length; };
       const lim = function (d) { return Date.now() - d * 86400000; };
@@ -421,10 +485,53 @@
         altas_por_dia: Object.keys(porDia).map(function (k) { return { dia: k, n: porDia[k] }; })
       }, error: null });
     }
-    if (nombre === "admin_listar_usuarios") return espera({ data: copia(S.usuarios).map(function (u) { delete u.clave; return u; }).sort(function (x, y) { return y.creado.localeCompare(x.creado); }), error: null });
+    if (nombre === "admin_negocio") {
+      const n = function (f) { return S.usuarios.filter(f).length; };
+      const lim = function (d) { return Date.now() - d * 86400000; };
+      const promo = function (u) { return u.premium_hasta && Date.parse(u.premium_hasta) > Date.now(); };
+      const act = function (u) { return u.estado === "activo"; };
+      const suma = function (f) { return S.pagos.filter(f).reduce(function (s, p) { return s + p.importe; }, 0); };
+      const mes = new Date().toISOString().slice(0, 7);
+      return espera({ data: {
+        usuarios: S.usuarios.length, activas: n(act), canceladas: n(function (u) { return u.estado === "cancelada"; }), bloqueadas: n(function (u) { return u.estado === "bloqueado"; }),
+        gratis: n(function (u) { return act(u) && (u.plan || "gratis") === "gratis" && !promo(u); }), premium: n(function (u) { return act(u) && u.plan === "premium"; }),
+        premium_promo: n(function (u) { return act(u) && (u.plan || "gratis") === "gratis" && promo(u); }), empresa: n(function (u) { return act(u) && u.plan === "empresa"; }),
+        empresas: new Set(S.usuarios.filter(function (u) { return u.plan === "empresa" && u.empresa; }).map(function (u) { return u.empresa.toLowerCase(); })).size,
+        nuevos_30d: n(function (u) { return Date.parse(u.creado) > lim(30); }), activos_7d: n(function (u) { return u.ultimo_acceso && Date.parse(u.ultimo_acceso) > lim(7); }),
+        gratis_activos_7d: n(function (u) { return act(u) && (u.plan || "gratis") === "gratis" && u.ultimo_acceso && Date.parse(u.ultimo_acceso) > lim(7); }),
+        inactivos_30d: n(function (u) { return act(u) && Date.parse(u.ultimo_acceso || u.creado) < lim(30); }), sin_confirmar: n(function (u) { return !u.email_confirmado; }),
+        invitados: n(function (u) { return !!u.invitado_por; }), invitadores: new Set(S.usuarios.filter(function (u) { return u.invitado_por; }).map(function (u) { return u.invitado_por; })).size,
+        ingresos_mes: suma(function (p) { return p.estado === "pagado" && String(p.periodo_inicio).slice(0, 7) === mes; }),
+        ingresos_30d: suma(function (p) { return p.estado === "pagado" && Date.parse(p.creado) > lim(30); }),
+        pendiente: suma(function (p) { return p.estado === "pendiente"; }), n_pendientes: S.pagos.filter(function (p) { return p.estado === "pendiente"; }).length,
+        n_fallidos: S.pagos.filter(function (p) { return p.estado === "fallido" && Date.parse(p.creado) > lim(30); }).length,
+        grupos: S.grupos.length + 23, grupos_compartidos: S.grupos.filter(function (g) { return g.compartido; }).length + 17
+      }, error: null });
+    }
+    if (nombre === "admin_cambiar_plan") {
+      const u = S.usuarios.find(function (x) { return x.id === a.usuario; });
+      if (!u || ["gratis", "premium", "empresa"].indexOf(a.nuevo_plan) === -1) return espera({ data: null, error: { message: "Plan no válido" } });
+      u.plan = a.nuevo_plan; if (a.nuevo_plan === "empresa" && a.nueva_empresa) u.empresa = String(a.nueva_empresa).trim();
+      guardar(); return espera({ data: null, error: null });
+    }
+    if (nombre === "admin_borrar_usuario") {
+      if (a.usuario === yo.id) return espera({ data: null, error: { message: "No puedes borrarte a ti mismo desde aquí" } });
+      ["tareas", "gastos", "grupos", "deudas", "sugerencias", "pagos_bizum", "pagos", "canjes"].forEach(function (t) { if (S[t]) S[t] = S[t].filter(function (f) { return f.user_id !== a.usuario; }); });
+      S.usuarios = S.usuarios.filter(function (u) { return u.id !== a.usuario; });
+      guardar(); return espera({ data: null, error: null });
+    }
+    if (nombre === "admin_listar_usuarios") return espera({ data: copia(S.usuarios).map(function (u) {
+      delete u.clave;
+      u.plan = u.plan || "gratis";
+      u.n_invitados = S.usuarios.filter(function (x) { return x.invitado_por === u.id; }).length;
+      u.pagado = S.pagos.filter(function (p) { return p.user_id === u.id && p.estado === "pagado"; }).reduce(function (s, p) { return s + p.importe; }, 0);
+      return u;
+    }).sort(function (x, y) { return y.creado.localeCompare(x.creado); }), error: null });
     if (nombre === "admin_cambiar_estado" || nombre === "admin_cambiar_rol") {
       if (a.usuario === yo.id) return espera({ data: null, error: { message: "No puedes cambiarte a ti mismo" } });
       const u = S.usuarios.find(function (x) { return x.id === a.usuario; });
+      if (nombre === "admin_cambiar_estado" && ["activo", "bloqueado", "cancelada"].indexOf(a.nuevo_estado) === -1) return espera({ data: null, error: { message: "Estado no válido" } });
+      if (nombre === "admin_cambiar_rol" && ["usuario", "admin", "comercial"].indexOf(a.nuevo_rol) === -1) return espera({ data: null, error: { message: "Rol no válido" } });
       if (nombre === "admin_cambiar_estado") u.estado = a.nuevo_estado; else u.rol = a.nuevo_rol;
       guardar(); return espera({ data: null, error: null });
     }
@@ -459,7 +566,9 @@
       const mal = function (m) { return espera({ data: { session: null, user: null }, error: { message: m } }); };
       if (!u) return mal("Invalid login credentials");
       if (u.estado === "bloqueado") return mal("No autorizado: cuenta bloqueada");
-      if (u.id === YO || !u.clave) return espera(abrirSesion(u));
+      if (u.id === YO) return espera(abrirSesion(u));
+      // Cuenta creada desde el back office: la primera contraseña que se usa queda como suya (como aceptar la invitación)
+      if (!u.clave) return resumen(o.password).then(function (h) { u.clave = h; u.email_confirmado = true; return espera(abrirSesion(u)); });
       return resumen(o.password).then(function (h) {
         if (h && h !== u.clave) return mal("Invalid login credentials");
         return espera(abrirSesion(u));
@@ -475,8 +584,20 @@
       return resumen(o.password).then(function (h) {
         const ahora = new Date().toISOString();
         const u = { id: "u-" + id(), email: email, nombre: String(datos.nombre || email.split("@")[0]).slice(0, 80), rol: "usuario", plan: "gratis",
-          estado: "activo", creado: ahora, ultimo_acceso: ahora, email_confirmado: true, n_tareas: 0, n_gastos: 0, clave: h };
+          estado: "activo", creado: ahora, ultimo_acceso: ahora, email_confirmado: true, n_tareas: 0, n_gastos: 0, clave: h, codigo_invitacion: codigo() };
         S.usuarios.push(u);
+        // Invitado por un amigo: Premium gratis para los dos si hay una promoción de invitación activa
+        const invitador = datos.invita && S.usuarios.find(function (x) { return x.codigo_invitacion === String(datos.invita).toUpperCase(); });
+        if (invitador) {
+          u.invitado_por = invitador.id;
+          const hoy = ahora.slice(0, 10);
+          const p = (S.promociones || []).find(function (x) { return x.tipo === "invitacion" && x.activa && x.inicio <= hoy && (!x.fin || x.fin >= hoy) && (!x.max_usos || x.usos < x.max_usos); });
+          if (p) {
+            const sumar = function (x, dias) { if (dias) x.premium_hasta = new Date(Math.max(Date.now(), Date.parse(x.premium_hasta || 0) || 0) + dias * 86400000).toISOString(); };
+            sumar(u, p.dias_premium); sumar(invitador, p.dias_premium_invitador); p.usos++;
+            S.canjes.push({ id: id(), promocion_id: p.id, user_id: u.id, invitador_id: invitador.id, creado: ahora });
+          }
+        }
         return espera(abrirSesion(u));
       });
     },
@@ -487,6 +608,21 @@
   };
 
   window.supabase = { createClient: function () { return { auth: auth, from: consulta, rpc: rpc }; } };
+
+  // Crear cuentas desde el back office (en la versión real lo hace /api/admin-usuarios con una invitación por email)
+  window.DemoAdmin = {
+    crearUsuario: function (d) {
+      if (!esAdmin()) return espera({ error: "No autorizado" });
+      const email = String(d.email || "").trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return espera({ error: "Email no válido" });
+      if (porEmail(email)) return espera({ error: "Ya existe una cuenta con ese email" });
+      const u = { id: "u-" + id(), email: email, nombre: String(d.nombre || "").trim().slice(0, 80), rol: ["usuario", "admin", "comercial"].indexOf(d.rol) !== -1 ? d.rol : "usuario",
+        plan: ["gratis", "premium", "empresa"].indexOf(d.plan) !== -1 ? d.plan : "gratis", empresa: d.plan === "empresa" ? String(d.empresa || "").trim() || null : null,
+        estado: "activo", creado: new Date().toISOString(), ultimo_acceso: null, email_confirmado: false, n_tareas: 0, n_gastos: 0, codigo_invitacion: codigo() };
+      S.usuarios.push(u); guardar();
+      return espera({ ok: true, id: u.id });
+    }
+  };
 
   // API pequeña para la simulación del banco
   window.DemoBanco = {

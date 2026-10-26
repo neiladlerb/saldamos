@@ -43,6 +43,7 @@
   </section>
 
   <section class="tarjeta" id="vista-registro" hidden>
+    <p class="mensaje ok" id="aviso-invitacion" style="margin:0" hidden>Te ha invitado un amigo. Crea tu cuenta gratis y empezad a llevar las cuentas juntos.</p>
     <form id="form-registro" novalidate>
       <label>Nombre <input type="text" id="r-nombre" autocomplete="name" required></label>
       <label>Email <input type="email" id="r-email" autocomplete="email" required></label>
@@ -101,6 +102,14 @@
   document.getElementById("volver-entrar").addEventListener("click", function () { mostrar("entrar"); });
   if (location.hash === "#registro") mostrar("registro");
 
+  // Enlace de invitación de un amigo: acceso.html?invita=CÓDIGO#registro
+  const invita = (new URLSearchParams(location.search).get("invita") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
+  if (invita) {
+    mostrar("registro");
+    const aviso = document.getElementById("aviso-invitacion");
+    aviso.hidden = false;
+  }
+
   function mensaje(id, texto, ok) {
     const p = document.getElementById(id);
     p.textContent = texto;
@@ -140,7 +149,7 @@
       email: email,
       password: pass,
       options: {
-        data: { nombre: nombre, acepta_privacidad: "true" },   // se guarda en el perfil
+        data: invita ? { nombre: nombre, acepta_privacidad: "true", invita: invita } : { nombre: nombre, acepta_privacidad: "true" },   // se guarda en el perfil
         emailRedirectTo: new URL("app.html", location.href).href
       }
     });

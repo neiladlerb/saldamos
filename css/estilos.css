@@ -553,7 +553,7 @@ h1 .logo { width: 1.1em; height: 1.1em; vertical-align: -0.12em; margin-right: .
 .dimelo-dl dt { color: var(--suave); font-size: .85rem; }
 .dimelo-dl dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
 .dimelo-modo { margin: 0; font-size: .8rem; color: var(--suave); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.dimelo-modo .insignia-premium::before, .dimelo-ia::before { content: "✦"; }
+.dimelo-modo .insignia-premium::before, .dimelo-ia::before { content: "★"; }
 .dimelo-mas { color: var(--marca); font-weight: 600; }
 .dimelo-ia { margin-left: 8px; vertical-align: middle; }
 .dimelo-accion { border-top: 1px solid var(--borde); padding-top: 8px; margin-top: 8px; }
@@ -639,3 +639,50 @@ a.anadir, a.boton-sec { display: inline-flex; align-items: center; justify-conte
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* ===== Back office comercial e «Invita a tus amigos» ===== */
+.bo-contenido { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+.bo-panel { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
+.bo-panel h3 { font-family: var(--fuente-titulo); font-size: 1.05rem; margin: 0; }
+.bo .cifra b { font-size: 1.35rem; }
+.form-bo { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
+.form-bo h3, .form-bo .ayuda, .form-bo .botones, .form-bo .ancho-total { grid-column: 1 / -1; }
+.form-bo label { display: grid; gap: 4px; font-size: .85rem; font-weight: 600; }
+.form-bo input, .form-bo select, .form-bo textarea { font: inherit; padding: 9px 10px; border: 1.5px solid var(--borde); border-radius: 10px; background: var(--tarjeta); color: var(--texto); width: 100%; box-sizing: border-box; }
+@media (max-width: 620px) { .form-bo { grid-template-columns: minmax(0, 1fr); } }
+.barra-planes { display: flex; height: 16px; border-radius: 999px; overflow: hidden; background: var(--borde); }
+.barra-planes span { display: block; height: 100%; }
+.seg-gratis { background: var(--secundario); }
+.seg-promo { background: var(--acento); }
+.seg-premium { background: var(--marca); }
+.seg-empresa { background: var(--texto); }
+.leyenda-planes { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .85rem; color: var(--suave); }
+.leyenda-planes .ley { display: inline-flex; align-items: center; gap: 6px; }
+.leyenda-planes i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.eje-grafico { display: flex; justify-content: space-between; gap: 8px; font-size: .78rem; color: var(--suave); margin-top: 6px; }
+.chips, .acciones-fila { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.acciones-fila select { max-width: 150px; }
+.celda-plan select { max-width: 130px; }
+.peligro-sec { color: var(--rojo); }
+.peligro-sec:hover { border-color: var(--rojo); color: var(--rojo); }
+.estado.plan-gratis { background: var(--marca-claro); color: var(--marca); }
+.estado.plan-premium { background: var(--marca); color: var(--sobre-marca); }
+.estado.plan-empresa { background: var(--texto); color: var(--fondo); }
+.propuestas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 760px) { .propuestas { grid-template-columns: minmax(0, 1fr); } }
+.propuesta { background: var(--tarjeta); border: 1px solid var(--borde); border-left: 4px solid var(--secundario); border-radius: 14px; padding: 16px; display: grid; gap: 8px; align-content: start; }
+.propuesta.prioridad-1 { border-left-color: var(--marca); }
+.propuesta h3 { font-family: var(--fuente-titulo); font-size: 1.05rem; margin: 0; }
+.propuesta-cab { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.propuesta-motivo { margin: 0; color: var(--suave); line-height: 1.45; }
+.propuesta-mensaje { margin: 0; padding: 10px 12px; background: var(--fondo); border-radius: 10px; font-size: .92rem; line-height: 1.5; }
+.actividad { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.actividad li { display: flex; gap: 10px; align-items: flex-start; line-height: 1.45; }
+.actividad input { margin-top: 3px; width: 18px; height: 18px; flex: none; accent-color: var(--marca); }
+.actividad input:checked + label { color: var(--suave); text-decoration: line-through; }
+.campanas { display: grid; gap: 12px; }
+.campana { gap: 8px; }
+.campana h3 { font-family: var(--fuente-titulo); font-size: 1.05rem; margin: 0; }
+.invitar { border: 2px solid var(--marca); }
+.invitar-enlace { display: flex; gap: 8px; }
+.invitar-enlace input { flex: 1; min-width: 0; font: inherit; padding: 10px 12px; border: 1.5px solid var(--borde); border-radius: 10px; background: var(--tarjeta); color: var(--texto); }

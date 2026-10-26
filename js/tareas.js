@@ -1,4 +1,4 @@
-// Tareas con fechas y avisos (antes: prototipo en Claude; ahora: Supabase)
+// Tareas con fechas y avisos (guardadas en Supabase)
 
   // --- Utilidades de fechas (igual que en la fase 2) --------------------
   function momentoAviso(tarea) {
