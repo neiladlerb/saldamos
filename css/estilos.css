@@ -613,6 +613,8 @@ h1 .logo { width: 1.1em; height: 1.1em; vertical-align: -0.12em; margin-right: .
 .demo-bizum-a { margin: 0; color: #5d6f66; }
 
 /* ===== Revisión UX/UI (oct 2026) ===== */
+/* El navegador añade 8 px de margen al body: lo quitamos (el aire lo pone el padding) */
+body { margin: 0; }
 /* Que nada empuje la página hacia los lados en el móvil */
 .libreta { grid-template-columns: minmax(0, 1fr); }
 img, svg, video { max-width: 100%; }

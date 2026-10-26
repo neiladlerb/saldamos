@@ -472,14 +472,15 @@
     }
   };
 
-  // Franja "DEMO" en todas las páginas
+  // Franja "DEMO" en todas las páginas (salvo las de cara al público: <body data-sin-franja>)
   document.addEventListener("DOMContentLoaded", function () {
+    if (document.body.hasAttribute("data-sin-franja")) return;
     const b = document.createElement("div");
     b.className = "franja-demo";
     b.innerHTML = '<span><b>DEMO</b> · datos de ejemplo guardados solo en este navegador</span>' +
       '<span class="franja-acciones"><label class="franja-plan">Versión <select id="demo-plan" aria-label="Versión de Saldamos">' +
       '<option value="gratis">Gratis</option><option value="premium">Premium</option><option value="empresa">Empresas</option></select></label>' +
-      '<a href="index.html">Inicio de la demo</a><button type="button" id="demo-reiniciar">Reiniciar datos</button></span>';
+      '<a href="lab.html">Lab</a><button type="button" id="demo-reiniciar">Reiniciar datos</button></span>';
     document.body.prepend(b);
     const selPlan = document.getElementById("demo-plan");
     selPlan.value = yoUser().plan || "gratis";

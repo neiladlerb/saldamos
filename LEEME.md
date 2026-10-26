@@ -7,7 +7,8 @@ Funciona sola, sin Claude: Supabase guarda las cuentas y los datos, y Vercel pub
 
 | Archivo | Para qué sirve |
 |---|---|
-| `index.html` | Portada pública. Con la demo activada enseña además el recorrido de la demo |
+| `index.html` | Portada comercial para el cliente final: qué es, cómo funciona, precios y preguntas. «Entrar» y «Crear cuenta» arriba a la derecha |
+| `lab.html` | **Lab** (uso interno): accesos de la demo, prototipos y guion para enseñarla. No sale en buscadores; enlace discreto al pie de la portada |
 | `acceso.html` | Entrar, crear cuenta y «He olvidado mi contraseña» |
 | `empresas.html` | Página para empresas (marca blanca, panel de RR. HH.) |
 | `recuperar.html` | Poner una contraseña nueva (se llega desde el email) |
@@ -171,7 +172,7 @@ La base de datos ya tiene una tabla `sponsors` y cada perfil un campo `sponsor_i
 
 ## Revisión de octubre 2026 (una sola versión)
 - **Demo y versión real son ahora el mismo código.** El interruptor `DEMO` de `js/config.js` decide si se usan datos de ejemplo o tu Supabase. La copia separada de la demo quedó en `_archivo/` y no se publica.
-- **Portada nueva** (`index.html`) y la pantalla de entrar pasa a `acceso.html`. Los emails de Supabase siguen funcionando igual.
+- **Portada comercial** (`index.html`) de cara al cliente final y la pantalla de entrar pasa a `acceso.html`. Todo lo interno (demo, prototipos, guion) está en **`lab.html`**, también desde la franja «DEMO» → «Lab». Los emails de Supabase siguen funcionando igual.
 - **App instalable (PWA)**: en el móvil, «Añadir a pantalla de inicio» la instala con su icono, a pantalla completa, y abre aunque no haya cobertura. Los datos nunca se guardan en esa copia: van siempre en directo.
 - **Arreglos en el móvil**: la app ya no se sale por la derecha en pantallas estrechas, las pestañas se deslizan si no caben, botones más cómodos al tacto, foco visible con teclado y menos animaciones para quien lo pida en su sistema.
 - **Más seguridad y menos dependencias**: lector de tickets servido desde la propia web, cabeceras de seguridad (HSTS incluido) y los archivos `supabase/`, `pruebas/` y la documentación no se publican (`.vercelignore`).

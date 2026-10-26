@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="img/icono.svg" type="image/svg+xml">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Saldamos · Lab</title>
+<meta name="theme-color" content="#0b6e4f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/estilos.css">
+<style>
+  .lab { max-width: 860px; margin: 0 auto; display: grid; gap: 24px; }
+  .lab-cab { display: grid; gap: 10px; }
+  .lab-cab p { color: var(--suave); margin: 0; line-height: 1.5; max-width: 60ch; }
+  .accesos, .protos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 620px) { .accesos, .protos { grid-template-columns: 1fr; } }
+  .acceso-demo { display: grid; gap: 6px; text-decoration: none; color: var(--texto); background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px; padding: 18px; }
+  .acceso-demo:hover, .acceso-demo:focus-visible { border-color: var(--marca); }
+  .acceso-demo b { font-family: var(--fuente-titulo); font-size: 1.15rem; }
+  .acceso-demo span { color: var(--suave); line-height: 1.45; }
+  .acceso-demo em { font-style: normal; color: var(--marca); font-weight: 600; font-size: .9rem; }
+  .guion { margin: 0; padding-left: 20px; display: grid; gap: 8px; line-height: 1.5; }
+  .proto { display: grid; gap: 4px; text-decoration: none; color: var(--texto); border: 1.5px dashed var(--secundario); border-radius: 12px; padding: 12px 14px; background: var(--tarjeta); }
+  .proto:hover, .proto:focus-visible { border-color: var(--marca); border-style: solid; }
+  .proto b { font-family: var(--fuente-titulo); }
+  .proto span { color: var(--suave); font-size: .92rem; line-height: 1.4; }
+  .proto small { color: var(--marca); font-weight: 600; }
+</style>
+</head>
+<body>
+<!-- =====================================================================
+     LAB · uso interno del equipo: accesos de la demo, prototipos para
+     probar con usuarios y guion para enseñarla. No sale en buscadores
+     ni se enlaza desde la portada comercial (solo un enlace discreto al pie).
+     ===================================================================== -->
+<main class="libreta ancho lab">
+  <div class="barra-sup">
+    <a class="marca" href="index.html"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect class="l1" x="6" y="6" width="52" height="52" rx="16"/><path class="l3" d="M19 33l9 9 18-20"/></svg>saldamos</a>
+    <span class="proto-badge">Lab · uso interno</span>
+  </div>
+
+  <section class="lab-cab">
+    <h1>Lab</h1>
+    <p>Accesos de la demo, prototipos para probar con usuarios reales y el guion para enseñarla. Esta página no aparece en buscadores.</p>
+    <p class="mensaje mal" id="aviso-real" hidden>La web está en modo real (<code>DEMO: false</code>). Los prototipos y los datos de ejemplo solo funcionan en la demo: publica una copia con <code>DEMO: true</code> para usarlos.</p>
+  </section>
+
+  <div class="accesos">
+    <a class="acceso-demo" href="acceso.html">
+      <b>Entrar en la app</b>
+      <span>Tareas, gastos y grupos. En la demo sirve cualquier email y contraseña.</span>
+      <em>Abrir →</em>
+    </a>
+    <a class="acceso-demo" href="grupo.html#Acdc-2026-Dem0">
+      <b>Lo que ve un amigo</b>
+      <span>La página del enlace que llega por WhatsApp: elige tu nombre y ves cuánto pagas y a quién.</span>
+      <em>Abrir →</em>
+    </a>
+    <a class="acceso-demo" href="calculadora.html">
+      <b>Calculadora rápida</b>
+      <span>Dividir la cuenta del restaurante al momento, con propina y nombres. Sin registro.</span>
+      <em>Abrir →</em>
+    </a>
+    <a class="acceso-demo" href="admin.html">
+      <b>Back office</b>
+      <span>Panel de gestión: altas, actividad, bloquear usuarios y nombrar administradores.</span>
+      <em>Abrir →</em>
+    </a>
+  </div>
+
+  <section class="tarjeta">
+    <div class="fila-titulo"><h2 style="margin:0">12 novedades para probar con usuarios reales</h2><span class="proto-badge">Prototipo</span></div>
+    <p class="ayuda">Cada uno tiene un botón «Dar mi opinión». Pásale a cada perfil solo el suyo y pídele que lo use sin explicarle nada.</p>
+    <div class="protos">
+      <a class="proto" href="acceso.html"><b>1 · Dímelo y lo apunto</b><span>Escribe o dicta «cena 120 € entre 4, pagó Ana». Arriba en la app.</span><small>Prueba: gente de 25-40 que ya usa Splitwise o notas del móvil</small></a>
+      <a class="proto" href="acceso.html"><b>2 · Tu mes en 30 segundos</b><span>Gastos → resumen con comparación y un consejo. Se puede mandar por WhatsApp.</span><small>Prueba: quien quiere ahorrar y no lleva cuentas</small></a>
+      <a class="proto" href="empresas.html"><b>3 · Saldamos para empresas</b><span>Landing B2B y panel de RR. HH. con datos solo agregados.</span><small>Prueba: responsables de RR. HH. / beneficios</small></a>
+      <a class="proto" href="acceso.html"><b>4 · Modo pareja / hogar</b><span>Grupos → «Casa»: fijos del mes y reparto 60/40 según ingresos.</span><small>Prueba: parejas que conviven y pisos compartidos</small></a>
+      <a class="proto" href="calculadora.html"><b>5 · QR en la mesa</b><span>Calculadora → «Enseñar un QR». Cada uno escanea y ve su parte.</span><small>Prueba: grupos de amigos en una cena real</small></a>
+      <a class="proto" href="acceso.html"><b>6 · Metas de ahorro en grupo</b><span>Grupos → «Lisboa 2027»: meta por persona y progreso de todos.</span><small>Prueba: grupos que preparan un viaje o despedida</small></a>
+      <a class="proto" href="grupo.html?lang=pt#Lisboa-2027-Pt"><b>7 · Amigos de Europa</b><span>Pagos con MB WAY / Wero y la página del grupo en portugués.</span><small>Prueba: grupos mixtos España-Portugal, Erasmus</small></a>
+      <a class="proto" href="acceso.html"><b>8 · Detector de suscripciones</b><span>Gastos → «Suscripciones detectadas» y aviso antes de renovar.</span><small>Prueba: quien paga 3+ suscripciones</small></a>
+      <a class="proto" href="acceso.html"><b>9 · Mis deudas y créditos</b><span>Pestaña «Deudas»: total que debes, cuotas del mes, cuándo terminas y % de tus ingresos.</span><small>Prueba: quien tiene préstamo, crédito o compras en cuotas</small></a>
+      <a class="proto" href="acceso.html"><b>10 · Escanear ticket</b><span>Gastos → Anotar un gasto → «Escanear ticket» o el ticket de ejemplo.</span><small>Prueba: quien guarda tickets de súper y restaurantes</small></a>
+      <a class="proto" href="acceso.html"><b>11 · Presupuesto compartido ★ Premium</b><span>Grupos → «Gastos de los niños»: 600 €/mes, quién pone cuánto, extras que aprueba la otra parte y un registro que no se puede borrar. Cambia la versión (Gratis / Premium / Empresas) en la franja de arriba.</span><small>Prueba: parejas y ex parejas con hijos</small></a>
+      <a class="proto" href="grupo.html#Acdc-2026-Dem0"><b>12 · Pagar con Bizum Pay</b><span>En el enlace del grupo elige «Sofi» y pulsa «Pagar con Bizum Pay»: el pago se confirma en el banco (simulado) y queda apuntado solo. El cobrador lo activa en Mi cuenta → «Cobrar con Bizum Pay».</span><small>Prueba: amigos que se deben dinero y quien organiza viajes</small></a>
+    </div>
+  </section>
+
+  <section class="tarjeta">
+    <h2>Guion sugerido para enseñarla (5 minutos)</h2>
+    <ol class="guion">
+      <li><b>Grupos → «Viaje concierto AC/DC».</b> Cinco amigos: uno pagó las entradas, el hotel lo adelantaron dos personas, la bencina solo se reparte entre los tres del coche y en el restaurante cada uno pagó lo suyo. La app lo resume en cuatro pagos.</li>
+      <li><b>«Pedir por WhatsApp».</b> Abre WhatsApp con el detalle de cada persona ya escrito.</li>
+      <li><b>«Lo que ve un amigo».</b> El enlace público, sin registrarse.</li>
+      <li><b>Gastos → «Movimientos de tu banco».</b> Pagos con Apple Pay, Google Pay y Bizum Pay que se convierten en gastos con un clic, y el Bizum de Pedro que marca su deuda como pagada sola.</li>
+      <li><b>Tareas → «Reservar la pista de pádel».</b> Al terminar un compromiso se envía un «Hecho» por WhatsApp y la otra persona da su conformidad sin cuenta (mira la de Laura).</li>
+      <li><b>Grupos → «Gastos de los niños» (Premium).</b> Presupuesto de 600 € al mes 60/40, gastos por categoría, el campamento pendiente de aprobar y el registro. Abre «Lo que ve la otra persona» y apruébalo como Marta, sin cuenta.</li>
+      <li><b>Bizum Pay.</b> Abre el enlace del viaje, elige «Sofi» y paga lo que le debe a Neil con Bizum Pay: vuelve sola a la página con el pago apuntado. En la app, el pago aparece como «Bizum Pay · conciliado solo».</li>
+      <li><b>Calculadora</b> y <b>back office</b>.</li>
+    </ol>
+  </section>
+
+  <section class="tarjeta">
+    <h2>En la demo hay cosas simuladas</h2>
+    <p class="ayuda" style="margin:0">Los datos y los movimientos bancarios son de ejemplo y se guardan solo en este navegador. La conexión real con bancos (open banking) y Bizum está en estudio. Los mensajes de WhatsApp sí se abren de verdad.</p>
+    <button type="button" class="boton-sec" id="reiniciar" style="justify-self:start">Reiniciar los datos de la demo</button>
+  </section>
+
+  <footer class="pie"><a href="index.html">← Volver a la portada</a></footer>
+</main>
+
+<script src="js/config.js"></script>
+<script>
+  if (!(window.CONFIG && window.CONFIG.DEMO)) document.getElementById("aviso-real").hidden = false;
+  document.getElementById("reiniciar").addEventListener("click", function () {
+    if (!this.dataset.c) { this.dataset.c = "1"; this.textContent = "¿Seguro? Pulsa otra vez"; return; }
+    try { localStorage.removeItem("misgastos-demo-v1"); } catch (e) {}
+    this.textContent = "Datos reiniciados";
+  });
+</script>
+</body>
+</html>

@@ -6,10 +6,10 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Saldamos · Cuentas claras, amistades largas</title>
-<meta name="description" content="Tareas con avisos, gastos personales y cuentas compartidas: quién pagó qué, quién debe a quién y cobro por WhatsApp en un clic.">
+<title>Saldamos · Gastos compartidos sin discusiones</title>
+<meta name="description" content="Apunta quién pagó qué y Saldamos calcula quién debe a quién con el mínimo de pagos. Cada uno recibe su parte por WhatsApp y paga directo por Bizum o transferencia.">
 <meta property="og:title" content="Saldamos · Cuentas claras, amistades largas">
-<meta property="og:description" content="Gastos compartidos sin discusiones: quién pagó qué y quién debe a quién, con cobro por WhatsApp.">
+<meta property="og:description" content="Gastos compartidos sin discusiones: quién pagó qué, quién debe a quién y cobro por WhatsApp en un clic.">
 <meta property="og:image" content="img/og-grupo.png">
 <meta name="theme-color" content="#0b6e4f">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,149 +17,427 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="css/estilos.css">
 <style>
-  .portada { max-width: 860px; margin: 0 auto; display: grid; gap: 24px; }
-  .hero { display: grid; gap: 14px; padding: 8px 0; }
-  .hero h1 { font-size: clamp(2.2rem, 7vw, 3.4rem); margin: 0; display: flex; align-items: center; gap: 10px; }
-  .hero .lema { font-family: var(--fuente-titulo); font-size: clamp(1.2rem, 3.6vw, 1.6rem); font-weight: 700; margin: 0; color: var(--texto); }
-  .hero p { font-size: 1.1rem; color: var(--suave); margin: 0; max-width: 56ch; line-height: 1.5; }
-  .ctas { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
-  .ctas a { text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box; }
-  .ventajas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-  .ventajas .tarjeta { gap: 6px; }
-  .ventajas h2 { font-size: 1.05rem; margin: 0; }
-  .ventajas p { margin: 0; color: var(--suave); line-height: 1.45; }
-  .accesos, .protos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  @media (max-width: 620px) { .ventajas, .accesos, .protos { grid-template-columns: 1fr; } }
-  .acceso-demo { display: grid; gap: 6px; text-decoration: none; color: var(--texto); background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px; padding: 18px; }
-  .acceso-demo:hover, .acceso-demo:focus-visible { border-color: var(--marca); }
-  .acceso-demo b { font-family: var(--fuente-titulo); font-size: 1.15rem; }
-  .acceso-demo span { color: var(--suave); line-height: 1.45; }
-  .acceso-demo em { font-style: normal; color: var(--marca); font-weight: 600; font-size: .9rem; }
-  .guion { margin: 0; padding-left: 20px; display: grid; gap: 8px; line-height: 1.5; }
-  .proto { display: grid; gap: 4px; text-decoration: none; color: var(--texto); border: 1.5px dashed var(--secundario); border-radius: 12px; padding: 12px 14px; background: var(--tarjeta); }
-  .proto:hover, .proto:focus-visible { border-color: var(--marca); border-style: solid; }
-  .proto b { font-family: var(--fuente-titulo); }
-  .proto span { color: var(--suave); font-size: .92rem; line-height: 1.4; }
-  .proto small { color: var(--marca); font-weight: 600; }
+  /* ===== Portada comercial (solo esta página) ===== */
+  body.web { padding: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: 76px; }
+  .contenedor { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+  .web h1, .web h2, .web h3 { font-family: var(--fuente-titulo); letter-spacing: -.02em; }
+  .web section { padding: 72px 0; }
+  .web .titulo-seccion { text-align: center; display: grid; gap: 10px; margin-bottom: 40px; }
+  .web .titulo-seccion h2 { font-size: clamp(1.7rem, 4vw, 2.4rem); margin: 0; }
+  .web .titulo-seccion p { color: var(--suave); margin: 0 auto; max-width: 56ch; font-size: 1.08rem; line-height: 1.55; }
+  .antetitulo { font-size: .8rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--marca); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 12px; font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; box-sizing: border-box; transition: transform .15s, filter .15s, border-color .15s; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-pri { background: var(--marca); color: var(--sobre-marca); border: 0; }
+  .btn-pri:hover { filter: brightness(1.08); }
+  .btn-sec { background: var(--tarjeta); color: var(--texto); border: 1.5px solid var(--borde); }
+  .btn-sec:hover { border-color: var(--marca); color: var(--marca); }
+  .btn-peq { min-height: 40px; padding: 0 16px; font-size: .95rem; border-radius: 10px; }
+
+  /* Cabecera */
+  .cabecera { position: sticky; top: 0; z-index: 40; background: color-mix(in srgb, var(--fondo) 88%, transparent); backdrop-filter: saturate(1.4) blur(10px); -webkit-backdrop-filter: saturate(1.4) blur(10px); border-bottom: 1px solid transparent; transition: border-color .2s; padding-top: env(safe-area-inset-top, 0px); }
+  .cabecera.con-borde { border-bottom-color: var(--borde); }
+  .cabecera .contenedor { display: flex; align-items: center; gap: 24px; height: 68px; }
+  .cabecera .marca { font-size: 1.25rem; }
+  .menu { display: flex; gap: 22px; margin-right: auto; }
+  .menu a { color: var(--suave); text-decoration: none; font-weight: 500; }
+  .menu a:hover { color: var(--texto); }
+  .acciones-cab { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .enlace-entrar { color: var(--texto); text-decoration: none; font-weight: 600; padding: 0 12px; min-height: 40px; display: inline-flex; align-items: center; border-radius: 10px; }
+  .enlace-entrar:hover { background: var(--marca-claro); }
+  @media (max-width: 860px) { .menu { display: none; } }
+  @media (max-width: 400px) { .cabecera .marca { font-size: 1.05rem; } .btn-peq { padding: 0 12px; } .enlace-entrar { padding: 0 8px; } }
+
+  /* Hero */
+  .hero { padding: 56px 0 72px !important; overflow: hidden; }
+  .hero .contenedor { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 48px; align-items: center; }
+  .hero h1 { font-size: clamp(2.5rem, 6.4vw, 4.2rem); line-height: 1.02; margin: 12px 0 18px; text-wrap: balance; }
+  .hero h1 em { font-style: normal; color: var(--marca); }
+  .hero .entradilla { font-size: clamp(1.08rem, 2.2vw, 1.25rem); color: var(--suave); line-height: 1.55; margin: 0 0 28px; max-width: 34em; }
+  .hero .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+  .hero .garantias { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 22px 0 0; padding: 0; list-style: none; color: var(--suave); font-size: .92rem; }
+  .hero .garantias li::before { content: "✓"; color: var(--marca); font-weight: 700; margin-right: 6px; }
+  @media (max-width: 860px) { .hero .contenedor { grid-template-columns: minmax(0, 1fr); gap: 40px; } .hero { padding-top: 32px !important; } }
+
+  /* Móvil de ejemplo */
+  .escena { position: relative; display: flex; justify-content: center; padding: 10px 0 64px; }
+  .escena::before { content: ""; position: absolute; inset: 6% 4% 10%; background: radial-gradient(closest-side, var(--secundario), transparent); opacity: .45; filter: blur(10px); }
+  .movil { position: relative; box-sizing: border-box; width: min(320px, calc(100% - 24px)); background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 36px; padding: 14px; box-shadow: 0 30px 60px -20px var(--sombra), 0 0 0 8px color-mix(in srgb, var(--texto) 92%, transparent); }
+  .movil-pantalla { background: var(--fondo); border-radius: 24px; padding: 18px 16px; display: grid; gap: 12px; }
+  .movil-pantalla .grupo-tit { font-family: var(--fuente-titulo); font-weight: 700; font-size: 1.2rem; }
+  .movil-pantalla .grupo-sub { color: var(--suave); font-size: .82rem; margin-top: -8px; }
+  .tarjeta-paz { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 16px; padding: 12px 14px; display: grid; gap: 2px; }
+  .tarjeta-paz b.cab { font-family: var(--fuente-titulo); font-size: .95rem; margin-bottom: 6px; }
+  .fila-paz { display: flex; justify-content: space-between; gap: 8px; font-size: .88rem; padding: 7px 0; border-top: 1px solid var(--borde); }
+  .fila-paz:first-of-type { border-top: 0; }
+  .fila-paz strong { font-variant-numeric: tabular-nums; }
+  .boton-wa { background: #1f8f4e; color: #fff; border-radius: 12px; text-align: center; font-weight: 600; font-size: .9rem; padding: 11px; }
+  .burbuja { position: absolute; right: max(0px, calc(50% - 230px)); bottom: 4px; width: 210px; background: #e7fbd8; color: #10241c; border-radius: 14px 14px 4px 14px; padding: 10px 12px; font-size: .8rem; line-height: 1.4; box-shadow: 0 14px 30px -12px rgba(16,36,28,.35); }
+  .burbuja small { display: block; color: #4b6b58; margin-top: 4px; text-align: right; }
+  @media (max-width: 420px) { .escena { padding-bottom: 96px; } .burbuja { right: 0; width: 200px; } }
+
+  /* Para quién */
+  .para { padding: 0 0 24px !important; }
+  .chips-uso { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+  .chips-uso span { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 999px; padding: 9px 16px; font-weight: 500; }
+
+  /* Cómo funciona */
+  .pasos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; counter-reset: paso; }
+  .paso { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 18px; padding: 24px; display: grid; gap: 8px; align-content: start; }
+  .paso::before { counter-increment: paso; content: counter(paso); width: 36px; height: 36px; border-radius: 50%; background: var(--marca); color: var(--sobre-marca); display: grid; place-items: center; font-family: var(--fuente-titulo); font-weight: 700; margin-bottom: 6px; }
+  .paso h3 { margin: 0; font-size: 1.2rem; }
+  .paso p { margin: 0; color: var(--suave); line-height: 1.55; }
+  .paso q { color: var(--texto); font-weight: 600; quotes: "«" "»"; }
+
+  /* Funciones */
+  .zona-alt { background: var(--tarjeta); border-block: 1px solid var(--borde); }
+  .funciones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .funcion { border-radius: 18px; padding: 22px; background: var(--fondo); display: grid; gap: 8px; align-content: start; }
+  .funcion .icono { width: 44px; height: 44px; border-radius: 12px; background: var(--marca-claro); color: var(--marca); display: grid; place-items: center; }
+  .funcion h3 { margin: 4px 0 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .funcion p { margin: 0; color: var(--suave); line-height: 1.55; }
+  .sello { font-family: var(--fuente-texto); font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; background: var(--acento); color: #10241c; border-radius: 999px; padding: 2px 8px; }
+  @media (max-width: 860px) { .pasos, .funciones { grid-template-columns: 1fr; } }
+  @media (min-width: 600px) and (max-width: 860px) { .funciones { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+  /* Confianza */
+  .confianza { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
+  .confianza div { display: grid; gap: 6px; align-content: start; }
+  .confianza b { font-family: var(--fuente-titulo); font-size: 1.15rem; }
+  .confianza p { margin: 0; color: var(--suave); line-height: 1.55; }
+  @media (max-width: 760px) { .confianza { grid-template-columns: 1fr; gap: 20px; } }
+
+  /* Precios */
+  .planes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+  .plan { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 20px; padding: 26px; display: flex; flex-direction: column; gap: 14px; }
+  .plan.destacado { border: 2px solid var(--marca); box-shadow: 0 20px 40px -24px var(--sombra); }
+  .plan h3 { margin: 0; font-size: 1.25rem; display: flex; gap: 8px; align-items: center; }
+  .plan .precio { font-family: var(--fuente-titulo); font-size: 2.2rem; font-weight: 700; line-height: 1; min-height: 2.2rem; display: flex; align-items: flex-end; }
+  .plan .precio small { font-family: var(--fuente-titulo); font-size: 1.4rem; }
+  .plan ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; flex: 1; align-content: start; }
+  .plan li { display: grid; grid-template-columns: 20px 1fr; gap: 8px; line-height: 1.45; }
+  .plan li::before { content: "✓"; color: var(--marca); font-weight: 700; }
+  .plan .btn { width: 100%; }
+  @media (max-width: 860px) { .planes { grid-template-columns: 1fr; max-width: 460px; margin: 0 auto; } }
+
+  /* Preguntas */
+  .preguntas { max-width: 760px; margin: 0 auto; display: grid; gap: 10px; }
+  .preguntas details { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px; padding: 0 20px; }
+  .preguntas summary { cursor: pointer; font-weight: 600; padding: 18px 0; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+  .preguntas summary::-webkit-details-marker { display: none; }
+  .preguntas summary::after { content: "+"; color: var(--marca); font-size: 1.4rem; line-height: 1; }
+  .preguntas details[open] summary::after { content: "–"; }
+  .preguntas details p { margin: 0 0 18px; color: var(--suave); line-height: 1.6; }
+
+  /* Llamada final */
+  .final { padding: 0 0 72px !important; }
+  .final .caja { background: var(--marca); color: var(--sobre-marca); border-radius: 28px; padding: clamp(32px, 6vw, 56px); display: grid; gap: 18px; justify-items: center; text-align: center; }
+  .final h2 { margin: 0; font-size: clamp(1.7rem, 4.4vw, 2.6rem); text-wrap: balance; }
+  .final p { margin: 0; opacity: .9; font-size: 1.08rem; }
+  .final .btn-pri { background: var(--acento); color: #10241c; }
+
+  /* Pie */
+  .pie-web { border-top: 1px solid var(--borde); padding: 40px 0 calc(32px + env(safe-area-inset-bottom, 0px)); color: var(--suave); font-size: .92rem; }
+  .pie-web .contenedor { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 24px; }
+  .pie-web b { color: var(--texto); display: block; margin-bottom: 10px; font-size: .9rem; }
+  .pie-web .col a { color: var(--suave); text-decoration: none; display: block; padding: 3px 0; }
+  .pie-web .col a:hover { color: var(--marca); }
+  .pie-web .legal { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--borde); padding-top: 18px; font-size: .85rem; }
+  .pie-web .legal a { color: var(--suave); }
+  .pie-web .legal .lab { opacity: .5; text-decoration: none; }
+  @media (max-width: 760px) { .pie-web .contenedor { grid-template-columns: 1fr 1fr; } .pie-web .contenedor > div:first-child { grid-column: 1 / -1; } }
 </style>
 </head>
-<body>
+<body class="web" data-sin-franja>
 <!-- =====================================================================
-     PORTADA pública. Con CONFIG.DEMO = true enseña además el recorrido
-     de la demo (accesos, prototipos y guion para enseñarla).
+     PORTADA COMERCIAL · de cara al cliente final.
+     Lo interno del proyecto (demo, prototipos, guion) está en lab.html.
      ===================================================================== -->
-<main class="libreta ancho portada">
-  <section class="hero">
-    <span class="estado pendiente" id="sello-demo" style="justify-self:start" hidden>Demo con datos de ejemplo</span>
-    <h1><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect class="l1" x="6" y="6" width="52" height="52" rx="16"/><path class="l3" d="M19 33l9 9 18-20"/></svg>saldamos</h1>
-    <p class="lema">Cuentas claras, amistades largas.</p>
-    <p>Tareas con avisos, gastos personales y cuentas compartidas con amigos: quién pagó qué, quién debe a quién y cobro por WhatsApp en un clic.</p>
-    <div class="ctas">
-      <a class="anadir" href="acceso.html#registro" id="cta-principal">Crear cuenta gratis</a>
-      <a class="boton-sec" href="acceso.html" id="cta-entrar">Entrar</a>
-      <a href="calculadora.html">Dividir una cuenta ahora, sin registro →</a>
+<header class="cabecera" id="cabecera">
+  <div class="contenedor">
+    <a class="marca" href="index.html" aria-label="Saldamos, inicio"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect class="l1" x="6" y="6" width="52" height="52" rx="16"/><path class="l3" d="M19 33l9 9 18-20"/></svg>saldamos</a>
+    <nav class="menu" aria-label="Secciones">
+      <a href="#como-funciona">Cómo funciona</a>
+      <a href="#funciones">Funciones</a>
+      <a href="#precios">Precios</a>
+      <a href="empresas.html">Empresas</a>
+    </nav>
+    <div class="acciones-cab">
+      <a class="enlace-entrar" href="acceso.html" id="cab-entrar">Entrar</a>
+      <a class="btn btn-pri btn-peq" href="acceso.html#registro" id="cab-registro">Crear cuenta</a>
     </div>
-  </section>
-
-  <section class="ventajas" aria-label="Qué puedes hacer">
-    <div class="tarjeta"><h2>Gastos en grupo</h2><p>Viajes, pisos o cenas: la app calcula el mínimo de pagos para quedar en paz.</p></div>
-    <div class="tarjeta"><h2>Cobra por WhatsApp</h2><p>Cada persona recibe un enlace con lo suyo. Sin descargar nada ni crear cuenta.</p></div>
-    <div class="tarjeta"><h2>Tus cuentas del mes</h2><p>Gastos, deudas, tickets escaneados y tareas con avisos, en el móvil y en el ordenador.</p></div>
-  </section>
-
-  <!-- ===== Solo en la demo ===== -->
-  <div id="solo-demo" class="portada" hidden>
-    <div class="accesos">
-      <a class="acceso-demo" href="acceso.html">
-        <b>Entrar en la app</b>
-        <span>Tareas, gastos y grupos. Entra con cualquier email y contraseña.</span>
-        <em>Abrir →</em>
-      </a>
-      <a class="acceso-demo" href="grupo.html#Acdc-2026-Dem0">
-        <b>Lo que ve un amigo</b>
-        <span>La página del enlace que llega por WhatsApp: elige tu nombre y ves cuánto pagas y a quién.</span>
-        <em>Abrir →</em>
-      </a>
-      <a class="acceso-demo" href="calculadora.html">
-        <b>Calculadora rápida</b>
-        <span>Dividir la cuenta del restaurante al momento, con propina y nombres. Sin registro.</span>
-        <em>Abrir →</em>
-      </a>
-      <a class="acceso-demo" href="admin.html">
-        <b>Back office</b>
-        <span>Panel de gestión: altas, actividad, bloquear usuarios y nombrar administradores.</span>
-        <em>Abrir →</em>
-      </a>
-    </div>
-
-    <section class="tarjeta">
-      <div class="fila-titulo"><h2 style="margin:0">12 novedades para probar con usuarios reales</h2><span class="proto-badge">Prototipo</span></div>
-      <p class="ayuda">Cada uno tiene un botón «Dar mi opinión». Pásale a cada perfil solo el suyo y pídele que lo use sin explicarle nada.</p>
-      <div class="protos">
-        <a class="proto" href="acceso.html"><b>1 · Dímelo y lo apunto</b><span>Escribe o dicta «cena 120 € entre 4, pagó Ana». Arriba en la app.</span><small>Prueba: gente de 25-40 que ya usa Splitwise o notas del móvil</small></a>
-        <a class="proto" href="acceso.html"><b>2 · Tu mes en 30 segundos</b><span>Gastos → resumen con comparación y un consejo. Se puede mandar por WhatsApp.</span><small>Prueba: quien quiere ahorrar y no lleva cuentas</small></a>
-        <a class="proto" href="empresas.html"><b>3 · Saldamos para empresas</b><span>Landing B2B y panel de RR. HH. con datos solo agregados.</span><small>Prueba: responsables de RR. HH. / beneficios</small></a>
-        <a class="proto" href="acceso.html"><b>4 · Modo pareja / hogar</b><span>Grupos → «Casa»: fijos del mes y reparto 60/40 según ingresos.</span><small>Prueba: parejas que conviven y pisos compartidos</small></a>
-        <a class="proto" href="calculadora.html"><b>5 · QR en la mesa</b><span>Calculadora → «Enseñar un QR». Cada uno escanea y ve su parte.</span><small>Prueba: grupos de amigos en una cena real</small></a>
-        <a class="proto" href="acceso.html"><b>6 · Metas de ahorro en grupo</b><span>Grupos → «Lisboa 2027»: meta por persona y progreso de todos.</span><small>Prueba: grupos que preparan un viaje o despedida</small></a>
-        <a class="proto" href="grupo.html?lang=pt#Lisboa-2027-Pt"><b>7 · Amigos de Europa</b><span>Pagos con MB WAY / Wero y la página del grupo en portugués.</span><small>Prueba: grupos mixtos España-Portugal, Erasmus</small></a>
-        <a class="proto" href="acceso.html"><b>8 · Detector de suscripciones</b><span>Gastos → «Suscripciones detectadas» y aviso antes de renovar.</span><small>Prueba: quien paga 3+ suscripciones</small></a>
-        <a class="proto" href="acceso.html"><b>9 · Mis deudas y créditos</b><span>Pestaña «Deudas»: total que debes, cuotas del mes, cuándo terminas y % de tus ingresos.</span><small>Prueba: quien tiene préstamo, crédito o compras en cuotas</small></a>
-        <a class="proto" href="acceso.html"><b>10 · Escanear ticket</b><span>Gastos → Anotar un gasto → «Escanear ticket» o el ticket de ejemplo.</span><small>Prueba: quien guarda tickets de súper y restaurantes</small></a>
-        <a class="proto" href="acceso.html"><b>11 · Presupuesto compartido ★ Premium</b><span>Grupos → «Gastos de los niños»: 600 €/mes, quién pone cuánto, extras que aprueba la otra parte y un registro que no se puede borrar. Cambia la versión (Gratis / Premium / Empresas) en la franja de arriba.</span><small>Prueba: parejas y ex parejas con hijos</small></a>
-        <a class="proto" href="grupo.html#Acdc-2026-Dem0"><b>12 · Pagar con Bizum Pay</b><span>En el enlace del grupo elige «Sofi» y pulsa «Pagar con Bizum Pay»: el pago se confirma en el banco (simulado) y queda apuntado solo. El cobrador lo activa en Mi cuenta → «Cobrar con Bizum Pay».</span><small>Prueba: amigos que se deben dinero y quien organiza viajes</small></a>
-      </div>
-    </section>
-
-    <section class="tarjeta">
-      <h2>Guion sugerido para enseñarla (5 minutos)</h2>
-      <ol class="guion">
-        <li><b>Grupos → «Viaje concierto AC/DC».</b> Cinco amigos: uno pagó las entradas, el hotel lo adelantaron dos personas, la bencina solo se reparte entre los tres del coche y en el restaurante cada uno pagó lo suyo. La app lo resume en cuatro pagos.</li>
-        <li><b>«Pedir por WhatsApp».</b> Abre WhatsApp con el detalle de cada persona ya escrito.</li>
-        <li><b>«Lo que ve un amigo».</b> El enlace público, sin registrarse.</li>
-        <li><b>Gastos → «Movimientos de tu banco».</b> Pagos con Apple Pay, Google Pay y Bizum Pay que se convierten en gastos con un clic, y el Bizum de Pedro que marca su deuda como pagada sola.</li>
-        <li><b>Tareas → «Reservar la pista de pádel».</b> Al terminar un compromiso se envía un «Hecho» por WhatsApp y la otra persona da su conformidad sin cuenta (mira la de Laura).</li>
-        <li><b>Grupos → «Gastos de los niños» (Premium).</b> Presupuesto de 600 € al mes 60/40, gastos por categoría, el campamento pendiente de aprobar y el registro. Abre «Lo que ve la otra persona» y apruébalo como Marta, sin cuenta.</li>
-        <li><b>Bizum Pay.</b> Abre el enlace del viaje, elige «Sofi» y paga lo que le debe a Neil con Bizum Pay: vuelve sola a la página con el pago apuntado. En la app, el pago aparece como «Bizum Pay · conciliado solo».</li>
-        <li><b>Calculadora</b> y <b>back office</b>.</li>
-      </ol>
-    </section>
-
-    <section class="tarjeta">
-      <h2>En la demo hay cosas simuladas</h2>
-      <p class="ayuda" style="margin:0">Los datos y los movimientos bancarios son de ejemplo y se guardan solo en este navegador. La conexión real con bancos (open banking) y Bizum está en estudio. Los mensajes de WhatsApp sí se abren de verdad.</p>
-      <button type="button" class="boton-sec" id="reiniciar" style="justify-self:start">Reiniciar los datos de la demo</button>
-    </section>
   </div>
+</header>
 
-  <footer class="pie">
-    <a href="empresas.html">Para empresas</a>
-    <a href="privacidad.html">Privacidad</a>
-    <a href="aviso-legal.html">Aviso legal</a>
-  </footer>
+<main>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="contenedor">
+      <div>
+        <span class="antetitulo">Gastos compartidos sin discusiones</span>
+        <h1>Cuentas claras, <em>amistades largas.</em></h1>
+        <p class="entradilla">Apunta quién pagó qué y Saldamos calcula quién debe a quién con el mínimo de pagos. Cada uno recibe su parte por WhatsApp y paga directo por Bizum o transferencia.</p>
+        <div class="ctas">
+          <a class="btn btn-pri" href="acceso.html#registro" id="hero-cta">Empieza gratis</a>
+          <a class="btn btn-sec" href="calculadora.html">Divide una cuenta ahora</a>
+        </div>
+        <ul class="garantias">
+          <li>Gratis</li>
+          <li>Sin tarjeta</li>
+          <li>Tus amigos no necesitan cuenta</li>
+        </ul>
+      </div>
+
+      <div class="escena" aria-hidden="true">
+        <div class="movil">
+          <div class="movil-pantalla">
+            <div class="grupo-tit">Viaje a Lisboa ✈️</div>
+            <div class="grupo-sub">1.240,00 € · 4 personas · 9 gastos</div>
+            <div class="tarjeta-paz">
+              <b class="cab">Para quedar en paz</b>
+              <div class="fila-paz"><span>Marta → Ana</span><strong>112,50 €</strong></div>
+              <div class="fila-paz"><span>Luis → Ana</span><strong>87,00 €</strong></div>
+              <div class="fila-paz"><span>Luis → Pablo</span><strong>23,50 €</strong></div>
+            </div>
+            <div class="boton-wa">Pedir por WhatsApp</div>
+          </div>
+        </div>
+        <div class="burbuja">Hola Luis 👋 Te toca pagar <b>87,00 €</b> a Ana por el viaje a Lisboa. Detalle y botón «Ya he pagado» 👇<small>12:41 ✓✓</small></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Para quién -->
+  <section class="para" aria-label="Para qué sirve">
+    <div class="contenedor">
+      <div class="chips-uso">
+        <span>✈️ Viajes con amigos</span>
+        <span>🏠 Piso compartido</span>
+        <span>💑 En pareja</span>
+        <span>🍽️ Cenas y regalos</span>
+        <span>👧 Gastos de los niños</span>
+        <span>🎉 Despedidas y eventos</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cómo funciona -->
+  <section id="como-funciona">
+    <div class="contenedor">
+      <div class="titulo-seccion">
+        <span class="antetitulo">Cómo funciona</span>
+        <h2>En paz en tres pasos</h2>
+        <p>Sin hojas de cálculo ni cuentas en una servilleta.</p>
+      </div>
+      <div class="pasos">
+        <div class="paso">
+          <h3>Crea el grupo</h3>
+          <p>Añade a tu gente solo con su nombre. Nadie más tiene que registrarse ni descargar nada.</p>
+        </div>
+        <div class="paso">
+          <h3>Apunta los gastos</h3>
+          <p>Quién pagó y entre quiénes: a partes iguales, por porcentaje o por importes. O escríbelo tal cual: <q>cena 120 € entre 4, pagó Ana</q>.</p>
+        </div>
+        <div class="paso">
+          <h3>Comparte y salda</h3>
+          <p>Cada uno recibe por WhatsApp lo que debe y a quién. Paga por Bizum o transferencia y queda apuntado.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Funciones -->
+  <section class="zona-alt" id="funciones">
+    <div class="contenedor">
+      <div class="titulo-seccion">
+        <span class="antetitulo">Funciones</span>
+        <h2>Todo para no perder la cuenta</h2>
+      </div>
+      <div class="funciones">
+        <div class="funcion">
+          <span class="icono"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10M7 7l3-3M7 7l3 3M17 17H7m10 0-3-3m3 3-3 3"/></svg></span>
+          <h3>El mínimo de pagos</h3>
+          <p>Aunque cada uno haya pagado cosas distintas, Saldamos lo resume en los pocos pagos necesarios para quedar en paz.</p>
+        </div>
+        <div class="funcion">
+          <span class="icono"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.5 8.5 0 1 1 21 11.5z"/></svg></span>
+          <h3>Cobra por WhatsApp</h3>
+          <p>Un mensaje claro para cada persona, con su parte y un enlace donde ve el detalle y avisa cuando ha pagado.</p>
+        </div>
+        <div class="funcion">
+          <span class="icono"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>
+          <h3>Dímelo y lo apunto</h3>
+          <p>Escribe o dicta como hablas: «Ana me ha pagado 30 €» o «recuérdame llamar al seguro el jueves». Siempre te enseña lo que ha entendido antes de guardar.</p>
+        </div>
+        <div class="funcion">
+          <span class="icono"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2zM9 7h6M9 11h6M9 15h4"/></svg></span>
+          <h3>Escanea el ticket</h3>
+          <p>Hazle una foto y se rellenan solos el comercio, la fecha, los productos y el total. La foto no sale de tu móvil.</p>
+        </div>
+        <div class="funcion">
+          <span class="icono"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18M12 3v18"/><circle cx="12" cy="12" r="9"/></svg></span>
+          <h3>Presupuesto compartido <span class="sello">Premium</span></h3>
+          <p>Para parejas o padres separados: cuánto pone cada uno, extras que aprueba la otra parte y un registro que nadie puede borrar.</p>
+        </div>
+        <div class="funcion">
+          <span class="icono"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4M16 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="m9 16 2 2 4-4"/></svg></span>
+          <h3>Tus cuentas del mes</h3>
+          <p>Gastos personales, préstamos y cuotas, tareas con avisos y un resumen del mes con un consejo. En el móvil y en el ordenador.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Confianza -->
+  <section aria-label="Seguridad y privacidad">
+    <div class="contenedor confianza">
+      <div><b>Tu dinero no pasa por nosotros</b><p>Cada uno paga directo de su banco a quien le toca, por Bizum o transferencia. Saldamos solo lleva la cuenta.</p></div>
+      <div><b>Cada uno ve solo lo suyo</b><p>La base de datos comprueba en cada consulta que solo accedes a tus datos. El enlace del grupo se puede desactivar cuando quieras.</p></div>
+      <div><b>Sin instalar nada</b><p>Funciona en el navegador de cualquier móvil u ordenador. Si quieres, añádela a tu pantalla de inicio como una app más.</p></div>
+    </div>
+  </section>
+
+  <!-- Precios -->
+  <section class="zona-alt" id="precios">
+    <div class="contenedor">
+      <div class="titulo-seccion">
+        <span class="antetitulo">Precios</span>
+        <h2>Empieza gratis</h2>
+        <p>Compartir gastos es gratis. Premium añade la IA y el presupuesto compartido.</p>
+      </div>
+      <div class="planes">
+        <div class="plan">
+          <h3>Gratis</h3>
+          <div class="precio">0 €</div>
+          <ul>
+            <li>Grupos y gastos compartidos</li>
+            <li>Cobro por WhatsApp con un enlace para cada uno</li>
+            <li>Calculadora y QR en la mesa</li>
+            <li>Tareas con avisos, deudas y escáner de tickets</li>
+            <li>«Dímelo y lo apunto» con reglas en tu móvil</li>
+          </ul>
+          <a class="btn btn-sec" href="acceso.html#registro">Crear cuenta gratis</a>
+        </div>
+        <div class="plan destacado">
+          <h3>Premium <span class="sello">Próximamente</span></h3>
+          <div class="precio"><small>Muy pronto</small></div>
+          <ul>
+            <li>Todo lo de Gratis</li>
+            <li>«Dímelo» con IA: cualquier frase y varias cosas a la vez</li>
+            <li>Presupuesto compartido con aprobaciones</li>
+            <li>Registro de cambios que nadie puede borrar</li>
+          </ul>
+          <a class="btn btn-pri" href="acceso.html#registro">Empieza gratis</a>
+        </div>
+        <div class="plan">
+          <h3>Empresas</h3>
+          <div class="precio"><small>A medida</small></div>
+          <ul>
+            <li>Premium para tu equipo o tus clientes</li>
+            <li>Con tu marca y tus colores</li>
+            <li>Panel con datos solo agregados y anónimos</li>
+          </ul>
+          <a class="btn btn-sec" href="empresas.html">Saber más</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Preguntas -->
+  <section id="preguntas">
+    <div class="contenedor">
+      <div class="titulo-seccion">
+        <span class="antetitulo">Preguntas frecuentes</span>
+        <h2>Lo que suele preguntarse</h2>
+      </div>
+      <div class="preguntas">
+        <details>
+          <summary>¿Mis amigos tienen que descargar algo o crear una cuenta?</summary>
+          <p>No. Les llega un enlace por WhatsApp, eligen su nombre y ven cuánto pagan y a quién. Solo quien organiza necesita cuenta.</p>
+        </details>
+        <details>
+          <summary>¿Saldamos cobra o guarda mi dinero?</summary>
+          <p>No. El dinero va siempre directo de una persona a otra, por Bizum o transferencia. Saldamos solo apunta quién ha pagado.</p>
+        </details>
+        <details>
+          <summary>¿Funciona en iPhone y Android?</summary>
+          <p>Sí, en el navegador de cualquier móvil u ordenador. En el móvil puedes añadirla a la pantalla de inicio y abrirla como una app.</p>
+        </details>
+        <details>
+          <summary>¿Y si cada uno pagó una cosa distinta?</summary>
+          <p>Para eso está. Apunta cada gasto con quién lo pagó y entre quiénes se reparte (a partes iguales, por porcentaje o por importes) y Saldamos calcula el mínimo de pagos.</p>
+        </details>
+        <details>
+          <summary>¿Cuánto cuesta?</summary>
+          <p>Compartir gastos es gratis. Premium, con IA y presupuesto compartido, llegará pronto. Para empresas hay planes a medida.</p>
+        </details>
+        <details>
+          <summary>¿Mis datos están seguros?</summary>
+          <p>Cada cuenta solo puede ver sus propios datos: lo comprueba la base de datos en cada consulta. Puedes descargar tus datos o borrar tu cuenta cuando quieras desde la propia app.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Llamada final -->
+  <section class="final">
+    <div class="contenedor">
+      <div class="caja">
+        <h2>Deja de hacer cuentas en una servilleta</h2>
+        <p>Crea tu primer grupo en menos de un minuto.</p>
+        <a class="btn btn-pri" href="acceso.html#registro" id="final-cta">Empieza gratis</a>
+      </div>
+    </div>
+  </section>
 </main>
+
+<footer class="pie-web">
+  <div class="contenedor">
+    <div>
+      <a class="marca" href="index.html"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect class="l1" x="6" y="6" width="52" height="52" rx="16"/><path class="l3" d="M19 33l9 9 18-20"/></svg>saldamos</a>
+      <p style="margin:10px 0 0;max-width:30ch">Cuentas claras, amistades largas.</p>
+    </div>
+    <div class="col">
+      <b>Producto</b>
+      <a href="#como-funciona">Cómo funciona</a>
+      <a href="#precios">Precios</a>
+      <a href="calculadora.html">Calculadora</a>
+    </div>
+    <div class="col">
+      <b>Empresas</b>
+      <a href="empresas.html">Saldamos para empresas</a>
+    </div>
+    <div class="col">
+      <b>Cuenta</b>
+      <a href="acceso.html">Entrar</a>
+      <a href="acceso.html#registro">Crear cuenta</a>
+    </div>
+    <div class="legal">
+      <span>© <span id="anio">2026</span> Saldamos · <a href="privacidad.html">Privacidad</a> · <a href="aviso-legal.html">Aviso legal</a></span>
+      <a class="lab" href="lab.html">Lab</a>
+    </div>
+  </div>
+</footer>
 
 <script src="js/config.js"></script>
 <script src="js/arranque.js"></script>
 <script src="js/comun.js"></script>
 <script>
-  // Con la sesión ya abierta, el botón principal lleva directo a la app
+  document.getElementById("anio").textContent = new Date().getFullYear();
+
+  // La cabecera muestra un borde al bajar
+  const cab = document.getElementById("cabecera");
+  function borde() { cab.classList.toggle("con-borde", window.scrollY > 8); }
+  window.addEventListener("scroll", borde, { passive: true }); borde();
+
+  // Con la sesión ya abierta, los botones llevan directo a la app
   sesionActual().then(function (s) {
     if (!s) return;
-    const cta = document.getElementById("cta-principal");
-    cta.textContent = "Abrir la app"; cta.href = "app.html";
-    document.getElementById("cta-entrar").hidden = true;
+    document.getElementById("cab-entrar").hidden = true;
+    const r = document.getElementById("cab-registro"); r.textContent = "Abrir la app"; r.href = "app.html";
+    ["hero-cta", "final-cta"].forEach(function (id) { const a = document.getElementById(id); a.textContent = "Abrir la app"; a.href = "app.html"; });
   }).catch(function () {});
-
-  if (window.MODO_DEMO) {
-    document.getElementById("sello-demo").hidden = false;
-    document.getElementById("solo-demo").hidden = false;
-    document.getElementById("reiniciar").addEventListener("click", function () {
-      if (!this.dataset.c) { this.dataset.c = "1"; this.textContent = "¿Seguro? Pulsa otra vez"; return; }
-      try { localStorage.removeItem("misgastos-demo-v1"); } catch (e) {}
-      this.textContent = "Datos reiniciados";
-    });
-  }
 </script>
 <script src="js/pwa.js"></script>
 </body>
