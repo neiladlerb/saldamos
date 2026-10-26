@@ -67,8 +67,11 @@
 
   async function pintar() {
     const lista = document.getElementById("banco-lista"); lista.innerHTML = "";
+    const movs = window.DemoBanco.movimientos();
+    seccion.hidden = !movs.length;   // las cuentas nuevas no tienen banco simulado
+    if (!movs.length) return;
     const gs = await grupos();
-    window.DemoBanco.movimientos().forEach(function (m) {
+    movs.forEach(function (m) {
       const f = el("div", "fila-pago");
       const t = el("span", "texto-pago");
       t.append(el("b", null, m.comercio), el("div", "g-meta", new Date(m.fecha + "T12:00").toLocaleDateString("es-ES", { day: "numeric", month: "short" }) + " · "));

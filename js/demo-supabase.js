@@ -229,16 +229,43 @@
   let S;
   try { S = JSON.parse(localStorage.getItem(CLAVE)); } catch (e) { S = null; }
   if (!S || !S.usuarios || !S.sugerencias || !S.version2 || !S.version4 || !S.version7 || !S.version8 || !S.version9) { S = semilla(); S.version2 = true; S.version4 = true; S.version5 = true; S.version6 = true; S.version7 = true; S.version8 = true; S.version9 = true; }
-  // TPV de pruebas de Redsys conectado para Neil: así se ve «Pagar con Bizum Pay» en sus grupos
+  // TPV de pruebas de Redsys conectado para Neil: así se ve «Pagar con Bizum Pay» en sus grupos.
+  // Cada cuenta tiene el suyo (S.tpvs[id de la cuenta]); las cuentas nuevas empiezan sin TPV.
   if (!S.pagos_bizum) S.pagos_bizum = [];
-  if (S.tpv === undefined) S.tpv = { comercio: "999008881", terminal: "1", clave: "sq7HjrUOBfKmC576ILgskD5srU870gJ7", entorno: "pruebas", activo: true, actualizado: new Date().toISOString() };
+  if (!S.tpvs) {
+    S.tpvs = {};
+    const previo = S.tpv === undefined ? { comercio: "999008881", terminal: "1", clave: "sq7HjrUOBfKmC576ILgskD5srU870gJ7", entorno: "pruebas", activo: true, actualizado: new Date().toISOString() } : S.tpv;
+    if (previo) S.tpvs[YO] = previo;
+    delete S.tpv;
+  }
   function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(S)); } catch (e) {} }
   S.tareas.forEach(function (t) { if (!t.token) t.token = (id() + id()).replace(/[^a-z0-9]/g, "").slice(-14); });
   guardar();
 
   const espera = function (v) { return new Promise(function (r) { setTimeout(function () { r(v); }, 120); }); };
   const copia = function (x) { return JSON.parse(JSON.stringify(x)); };
-  const yoUser = function () { return S.usuarios.find(function (u) { return u.id === YO; }); };
+  // Cuenta con la sesión abierta. YO es la cuenta de ejemplo (demo@saldamos.app), la única con datos de ejemplo;
+  // las cuentas creadas con «Crear cuenta» empiezan vacías y cada una ve solo lo suyo.
+  const yoId = function () { return S.sesion ? S.sesion.user.id : YO; };
+  const yoUser = function () { return S.usuarios.find(function (u) { return u.id === yoId(); }); };
+  const esAdmin = function () { const u = yoUser(); return !!u && u.rol === "admin"; };
+
+  // La demo no tiene servidor: la contraseña se guarda resumida (SHA-256), nunca tal cual
+  function resumen(texto) {
+    if (!(window.crypto && crypto.subtle && window.TextEncoder)) return Promise.resolve(null);
+    return crypto.subtle.digest("SHA-256", new TextEncoder().encode("saldamos-demo:" + texto)).then(function (b) {
+      return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, "0"); }).join("");
+    }).catch(function () { return null; });
+  }
+  function porEmail(email) {
+    const e = String(email || "").trim().toLowerCase();
+    return S.usuarios.find(function (u) { return u.email.toLowerCase() === e; });
+  }
+  function abrirSesion(u) {
+    u.ultimo_acceso = new Date().toISOString();
+    S.sesion = { user: { id: u.id, email: u.email } }; guardar();
+    return { data: { session: S.sesion, user: S.sesion.user }, error: null };
+  }
 
   // ---- Constructor de consultas compatible con supabase-js ----
   function consulta(tabla) {
@@ -263,12 +290,12 @@
       }
       const filas = S[tabla];
       // En "sugerencias" el usuario de la demo es administrador: ve todas
-      const cumple = function (f) { return (tabla === "sugerencias" || f.user_id === YO) && filtros.every(function (x) { return f[x[0]] === x[1]; }); };
+      const cumple = function (f) { return ((tabla === "sugerencias" && esAdmin()) || f.user_id === yoId()) && filtros.every(function (x) { return f[x[0]] === x[1]; }); };
       if (op === "select") { const r = filas.filter(cumple).map(copia); return { data: uno ? (r[0] || null) : r, error: null }; }
       if (op === "insert") {
         const lista = Array.isArray(datos) ? datos : [datos];
         const nuevas = lista.map(function (d) {
-          const f = Object.assign({ id: id(), user_id: YO, creado: new Date().toISOString(), creada: new Date().toISOString(), actualizado: new Date().toISOString() }, copia(d));
+          const f = Object.assign({ id: id(), user_id: yoId(), creado: new Date().toISOString(), creada: new Date().toISOString(), actualizado: new Date().toISOString() }, copia(d));
           if (tabla === "grupos") { f.token = f.token || (id() + id()).replace(/[^a-z0-9]/g, "").slice(-14); if (f.compartido == null) f.compartido = true; f.gastos = f.gastos || []; f.liquidaciones = f.liquidaciones || []; f.avisos = f.avisos || []; }
           if (tabla === "tareas" && f.hora && f.hora.length === 5) f.hora += ":00";
           if (tabla === "tareas" && !f.token) f.token = (id() + id()).replace(/[^a-z0-9]/g, "").slice(-14);
@@ -299,7 +326,7 @@
         }),
         gastos: copia(g.gastos), liquidaciones: copia(g.liquidaciones), avisos: copia(g.avisos || []),
         presupuesto: g.presupuesto ? copia(g.presupuesto) : null, aportes: copia(g.aportes || []), registro: copia(g.registro || []),
-        yo_miembro: (S.sesion && g.vinculo) || null, bizum_pay: !!(S.tpv && S.tpv.activo), actualizado: g.actualizado } : null, error: null });
+        yo_miembro: (S.sesion && g.vinculo) || null, bizum_pay: !!(S.tpvs[g.user_id] && S.tpvs[g.user_id].activo), actualizado: g.actualizado } : null, error: null });
     }
     if (nombre === "tarea_publica") {
       const ta = S.tareas.find(function (x) { return x.token === a.t; });
@@ -369,14 +396,18 @@
     }
     if (!S.sesion) return espera({ data: null, error: { message: "No autorizado" } });
     const yo = yoUser();
-    yo.n_tareas = S.tareas.length; yo.n_gastos = S.gastos.length;
-    if (nombre === "mi_tpv") return espera({ data: S.tpv ? { comercio: S.tpv.comercio, terminal: S.tpv.terminal, entorno: S.tpv.entorno, activo: S.tpv.activo, clave_fin: S.tpv.clave.slice(-4), actualizado: S.tpv.actualizado } : null, error: null });
+    const mias = function (lista) { return (lista || []).filter(function (f) { return f.user_id === yo.id; }).length; };
+    yo.n_tareas = mias(S.tareas); yo.n_gastos = mias(S.gastos);
+    const tpv = S.tpvs[yo.id];
+    if (nombre === "mi_tpv") return espera({ data: tpv ? { comercio: tpv.comercio, terminal: tpv.terminal, entorno: tpv.entorno, activo: tpv.activo, clave_fin: tpv.clave.slice(-4), actualizado: tpv.actualizado } : null, error: null });
     if (nombre === "guardar_tpv") {
-      if (!S.tpv && !a.clave) return espera({ data: null, error: { message: "Escribe la clave de tu TPV" } });
-      S.tpv = { comercio: a.comercio, terminal: a.terminal || "1", clave: a.clave || S.tpv.clave, entorno: a.entorno, activo: !!a.activo, actualizado: new Date().toISOString() };
+      if (!tpv && !a.clave) return espera({ data: null, error: { message: "Escribe la clave de tu TPV" } });
+      S.tpvs[yo.id] = { comercio: a.comercio, terminal: a.terminal || "1", clave: a.clave || tpv.clave, entorno: a.entorno, activo: !!a.activo, actualizado: new Date().toISOString() };
       guardar(); return espera({ data: { ok: true }, error: null });
     }
-    if (nombre === "borrar_tpv") { S.tpv = null; guardar(); return espera({ data: null, error: null }); }
+    if (nombre === "borrar_tpv") { delete S.tpvs[yo.id]; guardar(); return espera({ data: null, error: null }); }
+    // El back office solo es para administradores (como en la versión real)
+    if (nombre.indexOf("admin_") === 0 && !esAdmin()) return espera({ data: null, error: { message: "No autorizado" } });
     if (nombre === "admin_estadisticas") {
       const n = function (f) { return S.usuarios.filter(f).length; };
       const lim = function (d) { return Date.now() - d * 86400000; };
@@ -390,9 +421,9 @@
         altas_por_dia: Object.keys(porDia).map(function (k) { return { dia: k, n: porDia[k] }; })
       }, error: null });
     }
-    if (nombre === "admin_listar_usuarios") return espera({ data: copia(S.usuarios).sort(function (x, y) { return y.creado.localeCompare(x.creado); }), error: null });
+    if (nombre === "admin_listar_usuarios") return espera({ data: copia(S.usuarios).map(function (u) { delete u.clave; return u; }).sort(function (x, y) { return y.creado.localeCompare(x.creado); }), error: null });
     if (nombre === "admin_cambiar_estado" || nombre === "admin_cambiar_rol") {
-      if (a.usuario === YO) return espera({ data: null, error: { message: "No puedes cambiarte a ti mismo" } });
+      if (a.usuario === yo.id) return espera({ data: null, error: { message: "No puedes cambiarte a ti mismo" } });
       const u = S.usuarios.find(function (x) { return x.id === a.usuario; });
       if (nombre === "admin_cambiar_estado") u.estado = a.nuevo_estado; else u.rol = a.nuevo_rol;
       guardar(); return espera({ data: null, error: null });
@@ -402,16 +433,52 @@
       g.token = (id() + id()).replace(/[^a-z0-9]/g, "").slice(-14); guardar();
       return espera({ data: g.token, error: null });
     }
-    if (nombre === "borrar_mi_cuenta") { localStorage.removeItem(CLAVE); S = semilla(); guardar(); return espera({ data: null, error: null }); }
+    if (nombre === "borrar_mi_cuenta") {
+      // La cuenta de ejemplo vuelve a sus datos iniciales; una cuenta creada se borra con todo lo suyo
+      if (yo.id === YO) { localStorage.removeItem(CLAVE); S = semilla(); S.tpvs = {}; S.pagos_bizum = []; }  // sin marcas de versión: al volver a cargar se siembra entera
+      else {
+        ["tareas", "gastos", "grupos", "deudas", "sugerencias", "pagos_bizum"].forEach(function (t) {
+          if (S[t]) S[t] = S[t].filter(function (f) { return f.user_id !== yo.id; });
+        });
+        delete S.tpvs[yo.id];
+        S.usuarios = S.usuarios.filter(function (u) { return u.id !== yo.id; });
+        S.sesion = null;
+      }
+      guardar(); return espera({ data: null, error: null });
+    }
     return espera({ data: null, error: null });
   }
 
   const auth = {
     getSession: function () { return Promise.resolve({ data: { session: S.sesion } }); },
-    signInWithPassword: function () { S.sesion = { user: { id: YO, email: yoUser().email } }; guardar(); return espera({ data: { session: S.sesion }, error: null }); },
+    // Entrar: demo@saldamos.app abre la cuenta de ejemplo (con cualquier contraseña);
+    // cualquier otro email tiene que haberse creado antes con «Crear cuenta» en este navegador
+    signInWithPassword: function (o) {
+      o = o || {};
+      const u = porEmail(o.email);
+      const mal = function (m) { return espera({ data: { session: null, user: null }, error: { message: m } }); };
+      if (!u) return mal("Invalid login credentials");
+      if (u.estado === "bloqueado") return mal("No autorizado: cuenta bloqueada");
+      if (u.id === YO || !u.clave) return espera(abrirSesion(u));
+      return resumen(o.password).then(function (h) {
+        if (h && h !== u.clave) return mal("Invalid login credentials");
+        return espera(abrirSesion(u));
+      });
+    },
+    // Crear cuenta: una cuenta NUEVA y VACÍA (sin tareas, gastos, grupos ni deudas), plan Gratis
     signUp: function (o) {
-      const u = yoUser(); if (o && o.options && o.options.data && o.options.data.nombre) u.nombre = o.options.data.nombre;
-      S.sesion = { user: { id: YO, email: u.email } }; guardar(); return espera({ data: { session: S.sesion }, error: null });
+      o = o || {};
+      const email = String(o.email || "").trim().toLowerCase();
+      if (porEmail(email)) return espera({ data: { session: null, user: null }, error: { message: "User already registered" } });
+      if (String(o.password || "").length < 8) return espera({ data: { session: null, user: null }, error: { message: "Password should be at least 8 characters" } });
+      const datos = (o.options && o.options.data) || {};
+      return resumen(o.password).then(function (h) {
+        const ahora = new Date().toISOString();
+        const u = { id: "u-" + id(), email: email, nombre: String(datos.nombre || email.split("@")[0]).slice(0, 80), rol: "usuario", plan: "gratis",
+          estado: "activo", creado: ahora, ultimo_acceso: ahora, email_confirmado: true, n_tareas: 0, n_gastos: 0, clave: h };
+        S.usuarios.push(u);
+        return espera(abrirSesion(u));
+      });
     },
     signOut: function () { S.sesion = null; guardar(); return espera({ error: null }); },
     onAuthStateChange: function () { return { data: { subscription: { unsubscribe: function () {} } } }; },
@@ -423,7 +490,7 @@
 
   // API pequeña para la simulación del banco
   window.DemoBanco = {
-    movimientos: function () { return copia(S.banco); },
+    movimientos: function () { return yoId() === YO ? copia(S.banco) : []; },   // solo la cuenta de ejemplo tiene banco simulado
     marcar: function (idMov, estado) { const m = S.banco.find(function (x) { return x.id === idMov; }); if (m) { m.estado = estado; guardar(); } },
     reiniciar: function () { localStorage.removeItem(CLAVE); location.reload(); },
     tokenEjemplo: TOKEN_ACDC
@@ -454,7 +521,7 @@
         caja.querySelector("b").textContent = eur;
         caja.querySelector("#db-ok").onclick = function () {
           const g = S.grupos.find(function (x) { return x.token === d.t; });
-          S.pagos_bizum.unshift({ pedido: pedido, token: d.t, user_id: YO, cobrador: YO, grupo_id: g.id, de: d.de, a: d.a, importe: d.importe, estado: "pagado", respuesta: "0000", autorizacion: "123456", creado: new Date().toISOString() });
+          S.pagos_bizum.unshift({ pedido: pedido, token: d.t, user_id: g.user_id, cobrador: g.user_id, grupo_id: g.id, de: d.de, a: d.a, importe: d.importe, estado: "pagado", respuesta: "0000", autorizacion: "123456", creado: new Date().toISOString() });
           g.liquidaciones.push({ id: "bz" + pedido, de: d.de, a: d.a, importe: d.importe, fecha: new Date().toISOString().slice(0, 10), via: "bizum", pedido: pedido });
           g.avisos = (g.avisos || []).filter(function (v) { return !(v.de === d.de && v.a === d.a); });
           const nm = function (m) { const x = g.miembros.find(function (y) { return y.id === m; }); return x ? x.nombre : "?"; };
@@ -464,7 +531,8 @@
           setTimeout(function () { salir("ok"); }, 900);
         };
         caja.querySelector("#db-no").onclick = function () {
-          S.pagos_bizum.unshift({ pedido: pedido, token: d.t, user_id: YO, cobrador: YO, de: d.de, a: d.a, importe: d.importe, estado: "fallido", respuesta: "9915", creado: new Date().toISOString() });
+          const gk = S.grupos.find(function (x) { return x.token === d.t; }) || {};
+          S.pagos_bizum.unshift({ pedido: pedido, token: d.t, user_id: gk.user_id, cobrador: gk.user_id, de: d.de, a: d.a, importe: d.importe, estado: "fallido", respuesta: "9915", creado: new Date().toISOString() });
           guardar(); salir("ko");
         };
       }
