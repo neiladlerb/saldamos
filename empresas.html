@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="img/icono.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b6e4f">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Saldamos para empresas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/estilos.css">
+<style>
+  .b2b-hero { display: grid; gap: 12px; }
+  .b2b-hero h1 { font-size: clamp(2rem, 6vw, 3rem); line-height: 1.1; }
+  .b2b-hero p { font-size: 1.1rem; color: var(--suave); margin: 0; max-width: 60ch; line-height: 1.5; }
+  .tres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 680px) { .tres { grid-template-columns: 1fr; } }
+  .tres .tarjeta { margin: 0; }
+  .tres b { font-family: var(--fuente-titulo); display: block; margin-bottom: 4px; }
+  .tres p { margin: 0; color: var(--suave); line-height: 1.45; }
+  .panel-rrhh { border: 1px solid var(--borde); border-radius: 16px; overflow: hidden; background: var(--tarjeta); }
+  .panel-rrhh .cabecera { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; padding: 14px 18px; background: var(--marca); color: var(--sobre-marca); }
+  .panel-rrhh .cabecera b { font-family: var(--fuente-titulo); font-size: 1.1rem; }
+  .panel-rrhh .cuerpo { padding: 18px; display: grid; gap: 18px; }
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  @media (max-width: 680px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kpi { background: var(--marca-claro); border-radius: 12px; padding: 12px; }
+  .kpi small { display: block; color: var(--suave); font-size: .78rem; }
+  .kpi b { font-family: var(--fuente-titulo); font-size: 1.5rem; font-variant-numeric: tabular-nums; color: var(--marca); }
+  .barra-h { display: grid; grid-template-columns: minmax(110px, 170px) 1fr 48px; gap: 10px; align-items: center; margin: 6px 0; font-size: .92rem; }
+  .barra-h .b { height: 10px; background: var(--marca-claro); border-radius: 999px; overflow: hidden; }
+  .barra-h .b span { display: block; height: 100%; background: var(--marca); border-radius: 999px; }
+  .barra-h em { font-style: normal; text-align: right; font-variant-numeric: tabular-nums; }
+  .privacidad-b2b { background: var(--fondo); border-left: 3px solid var(--acento); padding: 10px 14px; border-radius: 0 10px 10px 0; font-size: .92rem; line-height: 1.5; }
+  .color-marca { display: flex; align-items: center; gap: 8px; font-size: .9rem; }
+  .color-marca input { width: 36px; height: 28px; border: 0; padding: 0; background: none; }
+  .precios { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 680px) { .precios { grid-template-columns: 1fr; } }
+  .precio { border: 1px solid var(--borde); border-radius: 14px; padding: 16px; background: var(--tarjeta); display: grid; gap: 6px; }
+  .precio b { font-family: var(--fuente-titulo); font-size: 1.6rem; color: var(--marca); }
+  .precio ul { margin: 0; padding-left: 18px; color: var(--suave); line-height: 1.5; }
+</style>
+</head>
+<body>
+<main class="libreta ancho" style="max-width:920px">
+  <div class="barra-sup">
+    <a class="marca" href="index.html"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect class="l1" x="6" y="6" width="52" height="52" rx="16"/><path class="l3" d="M19 33l9 9 18-20"/></svg>saldamos</a>
+    <span class="estado pendiente">Para empresas</span>
+  </div>
+
+  <section class="b2b-hero">
+    <h1>Bienestar financiero para tu equipo, con <span style="color:var(--marca)">tu marca</span></h1>
+    <p>Tus empleados (o tus clientes) controlan gastos, reparten cuentas con amigos, ahorran para metas y reciben un resumen mensual con un consejo. Tú ves solo datos agregados y anónimos para medir el impacto del beneficio.</p>
+  </section>
+
+  <div class="tres">
+    <div class="tarjeta"><b>Menos estrés por dinero</b><p>Resumen del mes, metas de ahorro y aviso de suscripciones que se olvidan. Sin vender productos financieros.</p></div>
+    <div class="tarjeta"><b>Marca blanca</b><p>La app sale con tu logo y tus colores dentro de tu intranet o tu app de beneficios.</p></div>
+    <div class="tarjeta"><b>El dinero nunca pasa por nosotros</b><p>Ni cuentas ni pagos: cada persona paga desde su banco. Sin riesgo regulatorio para la empresa.</p></div>
+  </div>
+
+  <h2>Así lo vería Recursos Humanos</h2>
+  <div class="panel-rrhh" id="panel">
+    <div class="cabecera"><b id="nombre-empresa">Empresa Demo · Panel de bienestar</b>
+      <label class="color-marca">Tu color <input type="color" id="color" value="#0b6e4f" aria-label="Color de tu marca"></label></div>
+    <div class="cuerpo">
+      <div class="kpis">
+        <div class="kpi"><small>Invitados</small><b>412</b></div>
+        <div class="kpi"><small>Activos este mes</small><b>268</b></div>
+        <div class="kpi"><small>Con meta de ahorro</small><b>41 %</b></div>
+        <div class="kpi"><small>Leen su resumen</small><b>73 %</b></div>
+      </div>
+      <div>
+        <p class="etiqueta">¿Qué usan más?</p>
+        <div id="uso"></div>
+      </div>
+      <div>
+        <p class="etiqueta">¿Qué les preocupa? (encuesta voluntaria, 154 respuestas)</p>
+        <div id="preocupa"></div>
+      </div>
+      <div class="privacidad-b2b">🔒 <b>Privacidad por diseño:</b> la empresa nunca ve gastos, deudas, ingresos ni nombres. Solo cifras de grupos de 10 personas o más; si un área tiene menos, no se muestra.</div>
+    </div>
+  </div>
+
+  <h2>Precios (hipótesis a validar)</h2>
+  <div class="precios">
+    <div class="precio"><span class="etiqueta" style="margin:0">Piloto</span><b>Gratis</b><ul><li>3 meses, hasta 100 personas</li><li>Informe de impacto al final</li></ul></div>
+    <div class="precio"><span class="etiqueta" style="margin:0">Equipo</span><b>1,5 €<small style="font-size:.9rem;color:var(--suave)">/persona/mes</small></b><ul><li>Marca blanca</li><li>Panel agregado</li></ul></div>
+    <div class="precio"><span class="etiqueta" style="margin:0">Clientes (B2B2C)</span><b>A medida</b><ul><li>Para bancos, aseguradoras, telcos</li><li>Integración en su app</li></ul></div>
+  </div>
+  <div id="opinion"></div>
+  <footer class="pie"><a href="index.html">← Volver a la portada</a></footer>
+</main>
+<script src="js/config.js"></script>
+<script src="js/reparto.js"></script>
+<script src="js/extras-demo.js"></script>
+<script>
+(function () {
+  function barras(id, datos) {
+    const c = document.getElementById(id);
+    datos.forEach(function (d) {
+      const f = document.createElement("div"); f.className = "barra-h";
+      const n = document.createElement("span"); n.textContent = d[0];
+      const b = document.createElement("div"); b.className = "b"; const s = document.createElement("span"); s.style.width = d[1] + "%"; b.appendChild(s);
+      const v = document.createElement("em"); v.textContent = d[1] + " %";
+      f.append(n, b, v); c.appendChild(f);
+    });
+  }
+  barras("uso", [["Gastos compartidos", 64], ["Resumen del mes", 58], ["Tareas y avisos", 37], ["Metas de ahorro", 29], ["Suscripciones", 22]]);
+  barras("preocupa", [["Llegar a fin de mes", 46], ["Ahorrar para algo", 38], ["Deudas con amigos/familia", 21], ["Entender mis gastos", 34]]);
+  document.getElementById("color").addEventListener("input", function () {
+    document.querySelector(".panel-rrhh .cabecera").style.background = this.value;
+    document.querySelectorAll(".kpi b, .barra-h .b span").forEach(function (e) { if (e.tagName === "B") e.style.color = this.value; else e.style.background = this.value; }, this);
+  });
+  if (window.Prototipos) document.getElementById("opinion").appendChild(window.Prototipos.opinion("t-bienestar-empresas", "Saldamos para empresas",
+    "Si trabajas en RR. HH. o beneficios: ¿lo ofrecerías a tu equipo? ¿Qué necesitarías ver para decir que sí?"));
+})();
+</script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

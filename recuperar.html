@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="img/icono.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b6e4f">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Saldamos · Nueva contraseña</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+<!-- Se llega aquí desde el enlace del email "recuperar contraseña".
+     Supabase abre una sesión temporal y aquí se fija la contraseña nueva. -->
+<main class="acceso">
+  <header>
+    <h1>Nueva <span>contraseña</span></h1>
+  </header>
+  <section class="tarjeta">
+    <form id="form-nueva" novalidate>
+      <label>Contraseña nueva (mínimo 8 caracteres) <input type="password" id="n-pass" autocomplete="new-password" minlength="8"></label>
+      <label>Repítela <input type="password" id="n-pass2" autocomplete="new-password" minlength="8"></label>
+      <button class="anadir" type="submit">Guardar contraseña</button>
+    </form>
+    <p class="mensaje" id="msg" hidden></p>
+  </section>
+  <footer class="pie"><a href="acceso.html">Volver a entrar</a></footer>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/arranque.js"></script>
+<script src="js/comun.js"></script>
+<script>
+  function mensaje(texto, ok) {
+    const p = document.getElementById("msg");
+    p.textContent = texto; p.className = "mensaje " + (ok ? "ok" : "mal"); p.hidden = false;
+  }
+  // Si el enlace ha caducado, no habrá sesión
+  setTimeout(async function () {
+    if (!(await sesionActual())) mensaje("El enlace no es válido o ha caducado. Vuelve a «Entrar» → «He olvidado mi contraseña» y pide uno nuevo.");
+  }, 1500);
+
+  document.getElementById("form-nueva").addEventListener("submit", async function (ev) {
+    ev.preventDefault();
+    const p1 = document.getElementById("n-pass").value, p2 = document.getElementById("n-pass2").value;
+    if (p1.length < 8) return mensaje("La contraseña debe tener al menos 8 caracteres.");
+    if (p1 !== p2) return mensaje("Las dos contraseñas no coinciden.");
+    const { error } = await sb.auth.updateUser({ password: p1 });
+    if (error) return mensaje(traducirError(error));
+    mensaje("Contraseña cambiada. Entrando…", true);
+    setTimeout(function () { location.replace("app.html"); }, 1200);
+  });
+</script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

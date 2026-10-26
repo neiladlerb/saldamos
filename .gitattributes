@@ -1,0 +1,4 @@
+# Saltos de línea iguales en Windows, Mac y Vercel
+* text=auto eol=lf
+*.png binary
+*.wasm binary

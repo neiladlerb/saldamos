@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pruebas · reparto.js</title>
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; margin: 24px; background: #f5f9f6; color: #10241c; }
+  h1 { font-size: 1.4rem; }
+  .ok { color: #12804a; } .mal { color: #c43a31; font-weight: 600; }
+  #resumen { font-size: 1.2rem; font-weight: 700; }
+  li { margin: 2px 0; }
+</style>
+</head>
+<body>
+<!-- =====================================================================
+     PRUEBAS de las matemáticas de los repartos (js/reparto.js).
+     Abre esta página en el navegador: todo debe salir en verde.
+     Pásalas antes de publicar cualquier cambio en reparto.js.
+     ===================================================================== -->
+<h1>Pruebas de js/reparto.js</h1>
+<p id="resumen">Ejecutando…</p>
+<ul id="lista"></ul>
+<script src="../js/reparto.js"></script>
+<script>
+(function () {
+  const R = window.Reparto;
+  const lista = document.getElementById("lista");
+  let bien = 0, mal = 0;
+  function prueba(nombre, fn) {
+    const li = document.createElement("li");
+    try { fn(); li.className = "ok"; li.textContent = "✔ " + nombre; bien++; }
+    catch (e) { li.className = "mal"; li.textContent = "✘ " + nombre + " → " + e.message; mal++; }
+    lista.appendChild(li);
+  }
+  function igual(a, b) {
+    const x = JSON.stringify(a), y = JSON.stringify(b);
+    if (x !== y) throw new Error("esperaba " + y + " y salió " + x);
+  }
+  function grupo(miembros, gastos, liquidaciones) {
+    return { nombre: "Prueba", miembros: miembros.map(function (id) { return { id: id, nombre: id.toUpperCase() }; }), gastos: gastos, liquidaciones: liquidaciones || [] };
+  }
+  function sumaNetos(g) { const s = R.saldos(g); return Object.keys(s).reduce(function (t, k) { return t + s[k].neto; }, 0); }
+
+  // ---- Importes escritos a mano ----
+  prueba("aCentimos «12,5» = 1250", function () { igual(R.aCentimos("12,5"), 1250); });
+  prueba("aCentimos «12.50» = 1250", function () { igual(R.aCentimos("12.50"), 1250); });
+  prueba("aCentimos «1.100» = 110000 (punto de miles)", function () { igual(R.aCentimos("1.100"), 110000); });
+  prueba("aCentimos «1.100,50 €» = 110050", function () { igual(R.aCentimos("1.100,50 €"), 110050); });
+  prueba("aCentimos «0,1» + «0,2» sin errores de decimales", function () { igual(R.aCentimos("0,1") + R.aCentimos("0,2"), 30); });
+  prueba("aCentimos texto vacío = 0", function () { igual(R.aCentimos(""), 0); igual(R.aCentimos(null), 0); igual(R.aCentimos("abc"), 0); });
+
+  // ---- Repartos ----
+  prueba("10 € entre 3 cuadra al céntimo (334 + 333 + 333)", function () { igual(R.repartirIguales(1000, ["a", "b", "c"]), { a: 334, b: 333, c: 333 }); });
+  prueba("Reparto entre nadie no falla", function () { igual(R.repartirIguales(1000, []), {}); });
+  prueba("Porcentaje 60/40 de 100,01 € suma exacto", function () {
+    const c = R.cuotas({ importe: 10001, reparto: { modo: "porcentaje", porcentajes: { a: 60, b: 40 } } });
+    igual(c.a + c.b, 10001);
+  });
+  prueba("Porcentaje 33,33/33,33/33,34 de 1 € suma exacto", function () {
+    const c = R.cuotas({ importe: 100, reparto: { modo: "porcentaje", porcentajes: { a: 33.33, b: 33.33, c: 33.34 } } });
+    igual(c.a + c.b + c.c, 100);
+  });
+
+  // ---- Validación ----
+  prueba("validarGasto acepta un gasto correcto", function () {
+    igual(R.validarGasto({ concepto: "Cena", importe: 3000, pagos: [{ miembro: "a", importe: 3000 }], reparto: { modo: "iguales", miembros: ["a", "b", "c"] } }), "");
+  });
+  prueba("validarGasto rechaza pagos que no suman el total", function () {
+    if (!R.validarGasto({ concepto: "Cena", importe: 3000, pagos: [{ miembro: "a", importe: 2000 }], reparto: { modo: "iguales", miembros: ["a", "b"] } })) throw new Error("no lo rechazó");
+  });
+  prueba("validarGasto rechaza porcentajes que no suman 100", function () {
+    if (!R.validarGasto({ concepto: "Casa", importe: 1000, pagos: [{ miembro: "a", importe: 1000 }], reparto: { modo: "porcentaje", porcentajes: { a: 60, b: 30 } } })) throw new Error("no lo rechazó");
+  });
+  prueba("validarGasto rechaza importes por persona que no suman el total", function () {
+    if (!R.validarGasto({ concepto: "Súper", importe: 1000, pagos: [{ miembro: "a", importe: 1000 }], reparto: { modo: "importes", importes: { a: 500, b: 400 } } })) throw new Error("no lo rechazó");
+  });
+
+  // ---- Saldos y plan de pagos ----
+  const viaje = grupo(["a", "b", "c", "d"], [
+    { concepto: "Entradas", importe: 40000, pagos: [{ miembro: "a", importe: 40000 }], reparto: { modo: "iguales", miembros: ["a", "b", "c", "d"] } },
+    { concepto: "Hotel", importe: 30000, pagos: [{ miembro: "b", importe: 20000 }, { miembro: "c", importe: 10000 }], reparto: { modo: "iguales", miembros: ["a", "b", "c", "d"] } },
+    { concepto: "Gasolina", importe: 9001, pagos: [{ miembro: "d", importe: 9001 }], reparto: { modo: "iguales", miembros: ["a", "b", "d"] } }
+  ]);
+  prueba("Los saldos de un grupo siempre suman 0", function () { igual(sumaNetos(viaje), 0); });
+  prueba("El plan deja a todos en paz", function () {
+    const s = R.saldos(viaje), neto = {};
+    Object.keys(s).forEach(function (k) { neto[k] = s[k].neto; });
+    R.plan(viaje).forEach(function (p) { neto[p.de] += p.importe; neto[p.a] -= p.importe; });
+    Object.keys(neto).forEach(function (k) { if (neto[k] !== 0) throw new Error(k + " queda con " + neto[k]); });
+  });
+  prueba("El plan usa como mucho n-1 pagos", function () { if (R.plan(viaje).length > 3) throw new Error(R.plan(viaje).length + " pagos"); });
+  prueba("Nadie se paga a sí mismo ni hay pagos de 0", function () {
+    R.plan(viaje).forEach(function (p) { if (p.de === p.a || !(p.importe > 0)) throw new Error(JSON.stringify(p)); });
+  });
+  prueba("Un pago registrado reduce la deuda", function () {
+    const g = grupo(["a", "b"], [{ concepto: "Cena", importe: 2000, pagos: [{ miembro: "a", importe: 2000 }], reparto: { modo: "iguales", miembros: ["a", "b"] } }]);
+    igual(R.plan(g), [{ de: "b", a: "a", importe: 1000 }]);
+    g.liquidaciones = [{ de: "b", a: "a", importe: 400 }];
+    igual(R.plan(g), [{ de: "b", a: "a", importe: 600 }]);
+    g.liquidaciones.push({ de: "b", a: "a", importe: 600 });
+    igual(R.plan(g), []);
+  });
+  prueba("Gastos pendientes, rechazados o del presupuesto no generan deudas", function () {
+    const g = grupo(["a", "b"], [
+      { concepto: "Pendiente", importe: 1000, estado: "pendiente", pagos: [{ miembro: "a", importe: 1000 }], reparto: { modo: "iguales", miembros: ["a", "b"] } },
+      { concepto: "Rechazado", importe: 1000, estado: "rechazado", pagos: [{ miembro: "a", importe: 1000 }], reparto: { modo: "iguales", miembros: ["a", "b"] } },
+      { concepto: "Del bote", importe: 1000, presupuesto: true, pagos: [{ miembro: "bote", importe: 1000 }], reparto: { modo: "iguales", miembros: ["a", "b"] } }
+    ]);
+    igual(R.plan(g), []);
+  });
+
+  // ---- WhatsApp e IBAN ----
+  prueba("Móvil español sin prefijo recibe +34", function () {
+    if (R.enlaceWhatsApp("hola", "600 11 22 33").indexOf("https://wa.me/34600112233?text=hola") !== 0) throw new Error(R.enlaceWhatsApp("hola", "600 11 22 33"));
+  });
+  prueba("Teléfono con prefijo se respeta", function () {
+    if (R.enlaceWhatsApp("x", "+351 912 345 678").indexOf("https://wa.me/351912345678") !== 0) throw new Error("prefijo cambiado");
+  });
+  prueba("IBAN válido de ejemplo", function () { igual(R.ibanValido("ES91 2100 0418 4502 0005 1332"), true); });
+  prueba("IBAN con un dígito cambiado no vale", function () { igual(R.ibanValido("ES91 2100 0418 4502 0005 1333"), false); });
+  prueba("Mensaje de grupo sin deudas dice «Todo saldado»", function () {
+    if (R.mensajeGrupo(grupo(["a"], []), "").indexOf("Todo saldado") === -1) throw new Error("no lo dice");
+  });
+
+  document.getElementById("resumen").textContent = mal ? (mal + " fallan de " + (bien + mal)) : ("Todo bien: " + bien + " pruebas");
+  document.getElementById("resumen").className = mal ? "mal" : "ok";
+  document.title = (mal ? "✘ " : "✔ ") + document.title;
+})();
+</script>
+</body>
+</html>

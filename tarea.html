@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="img/icono.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b6e4f">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Con enlaces /c/<código> y /g/<código>, base="/" hace que css/ y js/ se busquen en la raíz -->
+<base href="/">
+<!-- Vista previa al compartir por WhatsApp (tarjeta con imagen). Cuando tengas dominio,
+     pon la dirección completa en og:image, p. ej. https://saldamos.app/img/og-hecho.png -->
+<meta property="og:site_name" content="Saldamos">
+<meta property="og:title" content="Tarea terminada">
+<meta property="og:description" content="Confirma si está todo bien. No hace falta cuenta ni descargar nada.">
+<meta property="og:image" content="/img/og-hecho.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<title>Saldamos · Tarea terminada</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+<!-- =====================================================================
+     PÁGINA PÚBLICA DE UN COMPROMISO (la que llega con el «Hecho» por WhatsApp).
+     Sin cuenta. Solo se puede marcar «Conforme» o dejar un comentario.
+     ===================================================================== -->
+<main class="acceso">
+  <a class="marca" href="index.html"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect class="l1" x="6" y="6" width="52" height="52" rx="16"/><path class="l3" d="M19 33l9 9 18-20"/></svg>saldamos</a>
+  <p class="cargando" id="cargando">Cargando…</p>
+  <p class="mensaje mal" id="error" hidden>Este enlace no existe o ya no está disponible.</p>
+
+  <div id="contenido" class="panel" hidden>
+    <section class="tarjeta">
+      <span class="estado activo" style="justify-self:start">✔ Hecho</span>
+      <p class="suave" id="quien" style="margin:0"></p>
+      <h1 id="tarea" style="font-size:1.6rem;overflow-wrap:anywhere"></h1>
+      <p id="resumen" style="margin:0;white-space:pre-line;overflow-wrap:anywhere" hidden></p>
+      <p class="suave pequeno" id="cuando" style="margin:0;font-size:.85rem"></p>
+    </section>
+
+    <section class="tarjeta" id="ya" hidden>
+      <p class="mensaje ok" id="ya-texto" style="margin:0"></p>
+      <button type="button" class="enlace-boton" id="cambiar">Cambiar mi respuesta</button>
+    </section>
+
+    <section class="tarjeta" id="responder">
+      <h2>¿Está todo bien?</h2>
+      <button type="button" class="anadir" id="conforme">Conforme</button>
+      <label class="etiqueta" for="comentario" style="margin:0">¿Algo que añadir o que falte?</label>
+      <textarea id="comentario" rows="3" maxlength="1000" placeholder="Escribe tu comentario (opcional si estás conforme)" style="font:inherit;padding:10px 12px;border:1.5px solid var(--borde);border-radius:10px;background:var(--tarjeta);color:var(--texto);resize:vertical"></textarea>
+      <button type="button" class="boton-sec" id="comentar" style="justify-self:start">Enviar comentario</button>
+      <p class="mensaje" id="msg" hidden></p>
+    </section>
+
+    <section class="tarjeta">
+      <p style="margin:0">¿Tú también quieres cerrar compromisos así, o llevar tus gastos y deudas con amigos?</p>
+      <a class="anadir" href="acceso.html#registro">Crear cuenta gratis</a>
+    </section>
+  </div>
+  <footer class="pie"><a href="privacidad.html">Privacidad</a><a href="aviso-legal.html">Aviso legal</a></footer>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/arranque.js"></script>
+<script src="js/comun.js"></script>
+<script>
+  const $ = function (id) { return document.getElementById(id); };
+  const token = codigoDeEnlace();
+  let t = null;
+
+  function fechaHora(x) {
+    if (!x) return "";
+    return new Date(x).toLocaleString("es-ES", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+  }
+
+  function pintar() {
+    const de = t.de || "Alguien";
+    document.title = "Hecho: " + t.texto;
+    $("quien").textContent = de + " ha terminado" + (t.para ? " lo que acordó con " + t.para : " una tarea") + ":";
+    $("tarea").textContent = t.texto;
+    $("resumen").textContent = t.resumen || ""; $("resumen").hidden = !t.resumen;
+    $("cuando").textContent = t.completada ? "Terminada el " + fechaHora(t.completada) : "";
+    const c = t.conformidad;
+    if (!t.hecha) {
+      $("ya").hidden = false; $("responder").hidden = true; $("cambiar").hidden = true;
+      $("ya-texto").textContent = "Esta tarea todavía no está marcada como hecha.";
+      $("ya-texto").className = "mensaje";
+      return;
+    }
+    if (c) {
+      $("ya").hidden = false; $("responder").hidden = true;
+      $("ya-texto").textContent = c.estado === "conforme"
+        ? "Marcaste «Conforme»" + (c.comentario ? ": «" + c.comentario + "»" : "") + ". ¡Tema cerrado!"
+        : "Dejaste este comentario: «" + c.comentario + "». " + de + " ya lo puede ver.";
+    } else {
+      $("ya").hidden = true; $("responder").hidden = false;
+    }
+  }
+
+  async function responder(estado) {
+    const comentario = $("comentario").value.trim();
+    const msg = $("msg");
+    if (estado === "comentario" && !comentario) { msg.textContent = "Escribe tu comentario antes de enviarlo."; msg.className = "mensaje mal"; msg.hidden = false; return; }
+    const r = await sb.rpc("tarea_conformidad", { t: token, estado: estado, comentario: comentario || null });
+    if (r.error) { msg.textContent = "No se pudo enviar: " + traducirError(r.error); msg.className = "mensaje mal"; msg.hidden = false; return; }
+    msg.hidden = true;
+    t.conformidad = { estado: estado, comentario: comentario || null };
+    pintar();
+  }
+  $("conforme").addEventListener("click", function () { responder("conforme"); });
+  $("comentar").addEventListener("click", function () { responder("comentario"); });
+  $("cambiar").addEventListener("click", function () { $("ya").hidden = true; $("responder").hidden = false; });
+
+  (async function () {
+    const r = await sb.rpc("tarea_publica", { t: token });
+    $("cargando").hidden = true;
+    if (r.error || !r.data) { $("error").hidden = false; return; }
+    t = r.data;
+    $("contenido").hidden = false;
+    pintar();
+  })();
+</script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

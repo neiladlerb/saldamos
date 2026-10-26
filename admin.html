@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="img/icono.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b6e4f">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Saldamos · Back office</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+<!-- =====================================================================
+     BACK OFFICE · solo para usuarios con rol "admin".
+     Ojo: esconder esta página no es la seguridad. La seguridad está en la
+     base de datos: las funciones admin_* rechazan a quien no es admin.
+     Por privacidad, aquí NO se ven las tareas ni los gastos de nadie.
+     ===================================================================== -->
+<main class="libreta ancho">
+  <div class="barra-sup">
+    <a class="marca" href="app.html"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect class="l1" x="6" y="6" width="52" height="52" rx="16"/><path class="l3" d="M19 33l9 9 18-20"/></svg>saldamos · Back office</a>
+    <div class="usuario"><span id="yo"></span> <a href="app.html">Ir a la app</a></div>
+  </div>
+
+  <p class="mensaje mal" id="sin-permiso" hidden>No tienes permiso para ver el back office.</p>
+
+  <div id="contenido" hidden style="display:grid; gap:20px">
+    <h1>Panel de <span>gestión</span></h1>
+
+    <div class="cifras cuatro">
+      <div class="cifra"><small>Usuarios</small><b id="k-usuarios">–</b></div>
+      <div class="cifra positivo"><small>Altas últimos 7 días</small><b id="k-nuevos">–</b></div>
+      <div class="cifra"><small>Activos últimos 7 días</small><b id="k-activos">–</b></div>
+      <div class="cifra negativo"><small>Bloqueados</small><b id="k-bloqueados">–</b></div>
+    </div>
+    <p class="ayuda" style="margin:0" id="k-extra"></p>
+
+    <section class="grafico">
+      <h2>Altas de los últimos 30 días</h2>
+      <svg id="grafico-altas" viewBox="0 0 600 122" preserveAspectRatio="none" role="img" aria-label="Altas por día"></svg>
+      <div id="eje-grafico" style="display:flex; justify-content:space-between; gap:8px; font-size:.78rem; color:var(--suave); margin-top:6px"></div>
+    </section>
+
+    <div class="fila-titulo">
+      <h2>Usuarios</h2>
+      <button type="button" class="boton-sec" id="b-csv">Descargar CSV</button>
+    </div>
+    <div class="filtros">
+      <input type="search" id="buscar" placeholder="Buscar por nombre o email" aria-label="Buscar">
+      <select class="filtro" id="filtro" aria-label="Filtrar">
+        <option value="todos">Todos</option>
+        <option value="activo">Activos</option>
+        <option value="bloqueado">Bloqueados</option>
+        <option value="admin">Administradores</option>
+        <option value="sin-confirmar">Email sin confirmar</option>
+      </select>
+    </div>
+    <div class="tabla-caja">
+      <table>
+        <thead>
+          <tr><th>Usuario</th><th>Estado</th><th>Alta</th><th>Último acceso</th><th class="num">Tareas</th><th class="num">Gastos</th><th>Acciones</th></tr>
+        </thead>
+        <tbody id="filas"><tr><td colspan="7" class="cargando">Cargando…</td></tr></tbody>
+      </table>
+    </div>
+    <p class="mensaje" id="msg" hidden></p>
+
+    <div class="fila-titulo">
+      <h2>Sugerencias de los usuarios</h2>
+      <select class="filtro" id="filtro-sug" aria-label="Filtrar sugerencias">
+        <option value="nueva">Nuevas</option><option value="revisada">Revisadas</option><option value="en lab">En el lab</option>
+        <option value="descartada">Descartadas</option><option value="">Todas</option>
+      </select>
+    </div>
+    <p class="ayuda" style="margin:0" id="sug-resumen"></p>
+    <div class="tabla-caja">
+      <table>
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Valoración</th><th>Comentario</th><th>Usuario</th><th>Estado</th></tr></thead>
+        <tbody id="filas-sug"><tr><td colspan="6" class="cargando">Cargando…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/arranque.js"></script>
+<script src="js/comun.js"></script>
+<script>
+  let usuarios = [];
+  let miId = null;
+
+  function fecha(t) { return t ? new Date(t).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" }) : "—"; }
+  function mensaje(texto, ok) {
+    const p = document.getElementById("msg");
+    p.textContent = texto; p.className = "mensaje " + (ok ? "ok" : "mal"); p.hidden = false;
+    setTimeout(function () { p.hidden = true; }, 4000);
+  }
+
+  // --- Arranque: ¿hay sesión y es admin? ---
+  (async function () {
+    const s = await exigirSesion(); if (!s) return;
+    miId = s.user.id;
+    const perfil = await miPerfil();
+    document.getElementById("yo").textContent = s.user.email;
+    if (!perfil || perfil.rol !== "admin" || perfil.estado !== "activo") {
+      document.getElementById("sin-permiso").hidden = false;
+      return;
+    }
+    document.getElementById("contenido").hidden = false;
+    await Promise.all([cargarEstadisticas(), cargarUsuarios()]);
+    await cargarSugerencias();
+  })();
+
+  // --- Sugerencias de los usuarios (alimentan el Lab de producto) ---
+  let sugerencias = [];
+  const TIPOS_SUG = { idea: "Idea", problema: "Problema", elogio: "Elogio", pregunta: "Pregunta" };
+  async function cargarSugerencias() {
+    const { data, error } = await sb.from("sugerencias").select("*");
+    if (error) return mensaje(traducirError(error));
+    sugerencias = data.sort(function (a, b) { return String(b.creado).localeCompare(String(a.creado)); });
+    pintarSugerencias();
+  }
+  function pintarSugerencias() {
+    const f = document.getElementById("filtro-sug").value;
+    const conNota = sugerencias.filter(function (x) { return x.puntuacion; });
+    const media = conNota.length ? (conNota.reduce(function (s, x) { return s + x.puntuacion; }, 0) / conNota.length).toFixed(1).replace(".", ",") : "—";
+    document.getElementById("sug-resumen").textContent = sugerencias.length + " sugerencias · " +
+      sugerencias.filter(function (x) { return x.estado === "nueva"; }).length + " nuevas · valoración media " + media + " / 5";
+    const tb = document.getElementById("filas-sug"); tb.innerHTML = "";
+    const lista = sugerencias.filter(function (x) { return !f || x.estado === f; });
+    if (!lista.length) { tb.innerHTML = '<tr><td colspan="6" class="cargando">No hay sugerencias con este filtro.</td></tr>'; return; }
+    const emails = {}; usuarios.forEach(function (u) { emails[u.id] = u.email; });
+    lista.forEach(function (x) {
+      const tr = document.createElement("tr");
+      const td = function (t, c) { const d = document.createElement("td"); if (c) d.className = c; if (t instanceof Node) d.appendChild(t); else d.textContent = t; tr.appendChild(d); };
+      td(fecha(x.creado));
+      td(TIPOS_SUG[x.tipo] || x.tipo);
+      td(x.puntuacion ? "★".repeat(x.puntuacion) : "—");
+      td(x.texto + (x.pagina ? " · (" + x.pagina + ")" : ""), "texto-sugerencia");
+      td(emails[x.user_id] || "—");
+      const sel = document.createElement("select"); sel.className = "filtro"; sel.setAttribute("aria-label", "Estado de la sugerencia");
+      ["nueva", "revisada", "en lab", "descartada"].forEach(function (e) { const o = document.createElement("option"); o.value = e; o.textContent = e.charAt(0).toUpperCase() + e.slice(1); sel.appendChild(o); });
+      sel.value = x.estado;
+      sel.addEventListener("change", async function () {
+        const { error } = await sb.from("sugerencias").update({ estado: sel.value }).eq("id", x.id);
+        if (error) return mensaje(traducirError(error));
+        x.estado = sel.value; pintarSugerencias();
+      });
+      td(sel);
+      document.getElementById("filas-sug").appendChild(tr);
+    });
+  }
+  document.getElementById("filtro-sug").addEventListener("change", pintarSugerencias);
+
+  // --- Estadísticas ---
+  async function cargarEstadisticas() {
+    const { data, error } = await sb.rpc("admin_estadisticas");
+    if (error) return mensaje(traducirError(error));
+    document.getElementById("k-usuarios").textContent = data.usuarios;
+    document.getElementById("k-nuevos").textContent = data.nuevos_7d;
+    document.getElementById("k-activos").textContent = data.activos_7d;
+    document.getElementById("k-bloqueados").textContent = data.bloqueados;
+    document.getElementById("k-extra").textContent =
+      data.nuevos_30d + " altas en 30 días · " + data.sin_confirmar + " sin confirmar el email · " +
+      data.tareas + " tareas y " + data.gastos + " gastos guardados en total";
+    pintarGrafico(data.altas_por_dia || []);
+  }
+
+  // Gráfico de barras: una por día de los últimos 30
+  function pintarGrafico(altas) {
+    const svg = document.getElementById("grafico-altas");
+    const porDia = {};
+    altas.forEach(function (a) { porDia[a.dia] = a.n; });
+    const dias = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      dias.push(d.toISOString().slice(0, 10));
+    }
+    const max = Math.max(1, ...dias.map(function (d) { return porDia[d] || 0; }));
+    const ancho = 600 / dias.length;
+    let html = '<line x1="0" y1="120" x2="600" y2="120" stroke="var(--borde)" />';
+    dias.forEach(function (d, i) {
+      const n = porDia[d] || 0;
+      const h = n / max * 100;
+      html += '<rect x="' + (i * ancho + 2) + '" y="' + (120 - h) + '" width="' + (ancho - 4) + '" height="' + h +
+              '" rx="2" fill="var(--marca)"><title>' + d + ': ' + n + ' altas</title></rect>';
+    });
+    document.getElementById("eje-grafico").textContent = "";
+    const ini = document.createElement("span"); ini.textContent = fecha(dias[0]);
+    const mx = document.createElement("span"); mx.textContent = "Máximo: " + max + " altas/día";
+    const fin = document.createElement("span"); fin.textContent = "Hoy";
+    document.getElementById("eje-grafico").append(ini, mx, fin);
+    svg.innerHTML = html;
+  }
+
+  // --- Usuarios ---
+  async function cargarUsuarios() {
+    const { data, error } = await sb.rpc("admin_listar_usuarios");
+    if (error) return mensaje(traducirError(error));
+    usuarios = data;
+    pintarUsuarios();
+  }
+
+  function filtrados() {
+    const q = document.getElementById("buscar").value.trim().toLowerCase();
+    const f = document.getElementById("filtro").value;
+    return usuarios.filter(function (u) {
+      if (q && (u.email + " " + u.nombre).toLowerCase().indexOf(q) === -1) return false;
+      if (f === "activo") return u.estado === "activo";
+      if (f === "bloqueado") return u.estado === "bloqueado";
+      if (f === "admin") return u.rol === "admin";
+      if (f === "sin-confirmar") return !u.email_confirmado;
+      return true;
+    });
+  }
+
+  function pintarUsuarios() {
+    const tbody = document.getElementById("filas");
+    tbody.innerHTML = "";
+    const lista = filtrados();
+    if (lista.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="cargando">No hay usuarios con ese filtro.</td></tr>';
+      return;
+    }
+    lista.forEach(function (u) {
+      const tr = document.createElement("tr");
+      const celda = function (contenido, clase) { const td = document.createElement("td"); if (clase) td.className = clase; if (contenido instanceof Node) td.appendChild(contenido); else td.textContent = contenido; tr.appendChild(td); return td; };
+
+      const quien = document.createElement("div");
+      const n = document.createElement("strong"); n.textContent = u.nombre || "(sin nombre)";
+      const e = document.createElement("div"); e.className = "g-meta"; e.textContent = u.email;
+      quien.append(n, e);
+      celda(quien);
+
+      const est = document.createElement("div"); est.style.display = "flex"; est.style.gap = "4px"; est.style.flexWrap = "wrap";
+      const chip = function (t, c) { const s = document.createElement("span"); s.className = "estado " + c; s.textContent = t; est.appendChild(s); };
+      chip(u.estado === "activo" ? "Activo" : "Bloqueado", u.estado);
+      if (u.rol === "admin") chip("Admin", "admin");
+      if (!u.email_confirmado) chip("Sin confirmar", "pendiente");
+      celda(est);
+
+      celda(fecha(u.creado));
+      celda(fecha(u.ultimo_acceso));
+      celda(String(u.n_tareas), "num");
+      celda(String(u.n_gastos), "num");
+
+      const acciones = document.createElement("div"); acciones.style.display = "flex"; acciones.style.gap = "6px"; acciones.style.flexWrap = "wrap";
+      if (u.id === miId) {
+        const yo = document.createElement("span"); yo.className = "g-meta"; yo.textContent = "Eres tú";
+        acciones.appendChild(yo);
+      } else {
+        const b1 = document.createElement("button"); b1.className = "boton-sec"; b1.type = "button";
+        b1.textContent = u.estado === "activo" ? "Bloquear" : "Desbloquear";
+        b1.addEventListener("click", function () { cambiar("admin_cambiar_estado", { usuario: u.id, nuevo_estado: u.estado === "activo" ? "bloqueado" : "activo" }, b1); });
+        const b2 = document.createElement("button"); b2.className = "boton-sec"; b2.type = "button";
+        b2.textContent = u.rol === "admin" ? "Quitar admin" : "Hacer admin";
+        b2.addEventListener("click", function () { cambiar("admin_cambiar_rol", { usuario: u.id, nuevo_rol: u.rol === "admin" ? "usuario" : "admin" }, b2); });
+        acciones.append(b1, b2);
+      }
+      celda(acciones);
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Acciones con confirmación de dos pulsaciones
+  async function cambiar(funcion, parametros, boton) {
+    if (!boton.dataset.confirmar) {
+      boton.dataset.original = boton.textContent;
+      boton.dataset.confirmar = "1";
+      boton.textContent = "¿Confirmar?";
+      setTimeout(function () { if (boton.isConnected) { delete boton.dataset.confirmar; boton.textContent = boton.dataset.original; } }, 3000);
+      return;
+    }
+    boton.disabled = true;
+    const { error } = await sb.rpc(funcion, parametros);
+    if (error) { boton.disabled = false; return mensaje(traducirError(error)); }
+    mensaje("Cambio guardado.", true);
+    await Promise.all([cargarEstadisticas(), cargarUsuarios()]);
+  }
+
+  document.getElementById("buscar").addEventListener("input", pintarUsuarios);
+  document.getElementById("filtro").addEventListener("change", pintarUsuarios);
+
+  // Exportar la lista (lo que se ve con el filtro actual) a CSV para Excel
+  document.getElementById("b-csv").addEventListener("click", function () {
+    if (window.MODO_DEMO) { mensaje("En la demo no se descargan archivos. En la versión real se descarga la lista en CSV para Excel."); return; }
+    const cab = ["email", "nombre", "rol", "estado", "email_confirmado", "alta", "ultimo_acceso", "tareas", "gastos"];
+    const esc = function (v) { v = v == null ? "" : String(v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    const filas = filtrados().map(function (u) {
+      return [u.email, u.nombre, u.rol, u.estado, u.email_confirmado ? "sí" : "no", u.creado, u.ultimo_acceso, u.n_tareas, u.n_gastos].map(esc).join(";");
+    });
+    const blob = new Blob(["﻿" + cab.join(";") + "\n" + filas.join("\n")], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = "usuarios-saldamos.csv";
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+</script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

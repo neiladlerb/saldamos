@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="img/icono.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b6e4f">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Saldamos · Calculadora para dividir cuentas</title>
+<meta name="description" content="Divide la cuenta del restaurante en segundos: propina, quien pidió algo aparte y envío por WhatsApp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/estilos.css">
+<style>
+  .grande { font: inherit; font-family: var(--fuente-titulo); font-size: 2rem; padding: 10px 14px; border: 1.5px solid var(--borde); border-radius: 12px; background: var(--tarjeta); color: var(--texto); width: 100%; box-sizing: border-box; font-variant-numeric: tabular-nums; }
+  .grande:focus { outline: none; border-color: var(--marca); }
+  .contador { display: flex; align-items: center; gap: 12px; }
+  .contador button { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--borde); background: var(--tarjeta); color: var(--marca); font-size: 1.4rem; font-weight: 700; cursor: pointer; }
+  .contador output { font-family: var(--fuente-titulo); font-size: 1.8rem; min-width: 48px; text-align: center; font-variant-numeric: tabular-nums; }
+  .opciones-propina { display: flex; gap: 6px; flex-wrap: wrap; }
+  .opciones-propina button { font: inherit; font-weight: 600; padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--borde); background: var(--tarjeta); color: var(--texto); cursor: pointer; }
+  .opciones-propina button[aria-pressed="true"] { background: var(--marca); border-color: var(--marca); color: var(--sobre-marca); }
+  .campos.dos { grid-template-columns: 1fr 170px; }
+  @media (max-width: 560px) { .campos.dos { grid-template-columns: 1fr; } }
+  .etiqueta-campo { display: grid; gap: 4px; font-size: .75rem; letter-spacing: .05em; text-transform: uppercase; color: var(--suave); font-weight: 600; }
+  .etiqueta-campo input { font: inherit; font-size: 1rem; text-transform: none; letter-spacing: 0; color: var(--texto); padding: 10px 12px; border: 1.5px solid var(--borde); border-radius: 10px; background: var(--tarjeta); min-width: 0; }
+  .opcional { text-transform: none; letter-spacing: 0; font-weight: 400; }
+  .mesa { border-top: 1px solid var(--borde); margin-top: 8px; padding-top: 10px; }
+  .mesa summary { cursor: pointer; font-weight: 600; color: var(--marca); }
+  .qr-caja { display: grid; justify-items: center; gap: 8px; padding: 14px; background: #fff; border-radius: 12px; margin-top: 10px; }
+  .qr-caja svg { width: 220px; height: 220px; display: block; }
+  .resultado { background: var(--marca-claro); border-radius: 14px; padding: 18px; display: grid; gap: 6px; }
+</style>
+</head>
+<body>
+<!-- =====================================================================
+     CALCULADORA RÁPIDA · no necesita cuenta ni guarda nada.
+     Se recalcula con cada tecla.
+     ===================================================================== -->
+<main class="libreta">
+  <div class="barra-sup">
+    <a class="marca" href="index.html"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect class="l1" x="6" y="6" width="52" height="52" rx="16"/><path class="l3" d="M19 33l9 9 18-20"/></svg>saldamos</a>
+    <a class="boton-sec" href="app.html#grupos">Mis grupos</a>
+  </div>
+  <h1>Dividir la <span>cuenta</span></h1>
+
+  <section class="tarjeta">
+    <div class="campos dos">
+      <label class="etiqueta-campo">Motivo <span class="opcional">(opcional)</span>
+        <input type="text" id="motivo" placeholder="Ej. Cena de cumpleaños" autocomplete="off">
+      </label>
+      <label class="etiqueta-campo">Fecha
+        <input type="date" id="fecha">
+      </label>
+    </div>
+
+    <label class="etiqueta" for="total" style="margin:0">Total de la cuenta</label>
+    <input class="grande" id="total" type="text" inputmode="decimal" placeholder="0,00 €" autocomplete="off">
+
+    <span class="etiqueta" style="margin:0">Personas</span>
+    <div class="contador">
+      <button type="button" id="menos" aria-label="Una persona menos">−</button>
+      <output id="personas">2</output>
+      <button type="button" id="mas" aria-label="Una persona más">+</button>
+    </div>
+
+    <span class="etiqueta" style="margin:0">Nombres de los amigos <span class="opcional">(opcional)</span></span>
+    <div id="chips-nombres" class="chips"></div>
+    <div class="fila-miembro">
+      <input type="text" id="nuevo-nombre" placeholder="Escribe un nombre y pulsa Añadir" autocomplete="off" aria-label="Nombre">
+      <button type="button" class="boton-sec" id="add-nombre">Añadir</button>
+    </div>
+
+    <span class="etiqueta" style="margin:0">Propina</span>
+    <div class="opciones-propina" id="propinas">
+      <button type="button" data-p="0" aria-pressed="true">Sin propina</button>
+      <button type="button" data-p="5" aria-pressed="false">5 %</button>
+      <button type="button" data-p="10" aria-pressed="false">10 %</button>
+      <button type="button" data-p="15" aria-pressed="false">15 %</button>
+    </div>
+
+    <label class="casilla"><input type="checkbox" id="redondear"> <span>Redondear cada parte al euro (lo que sobre, para el bote o la propina)</span></label>
+  </section>
+
+  <details class="nuevo">
+    <summary>¿Alguien pidió algo aparte?</summary>
+    <p class="ayuda" style="margin:0 0 10px">Por ejemplo, un vino que solo tomó una persona. Se le suma a ella y el resto se reparte entre todos.</p>
+    <div id="extras" class="grid-form"></div>
+    <button type="button" class="boton-sec" id="add-extra" style="margin-top:10px">+ Añadir</button>
+  </details>
+  <datalist id="lista-nombres"></datalist>
+
+  <section class="resultado" aria-live="polite">
+    <span class="etiqueta" style="margin:0" id="res-titulo">Cada uno paga</span>
+    <p class="resultado-grande" id="res-cifra">0,00 €</p>
+    <div id="res-detalle" class="g-lineas"></div>
+    <p class="ayuda" id="res-nota" style="margin:0"></p>
+    <p class="error" id="res-error" hidden></p>
+    <div class="fila-miembro">
+      <a class="anadir boton-wa" id="wa" target="_blank" rel="noopener">Enviar por WhatsApp</a>
+    </div>
+    <details class="mesa" id="mesa">
+      <summary>📱 Enseñar un QR en la mesa</summary>
+      <p class="ayuda" style="margin:6px 0">Cada uno lo escanea con su móvil, ve su parte y avisa a quien pagó. Sin descargar nada.</p>
+      <div class="campos dos">
+        <label class="etiqueta-campo">Quién pagó <span class="opcional">(opcional)</span><input type="text" id="mesa-pagador" maxlength="40" autocomplete="off"></label>
+        <label class="etiqueta-campo">Su Bizum / móvil <span class="opcional">(opcional)</span><input type="tel" id="mesa-tel" maxlength="20" autocomplete="off" placeholder="600 11 22 33"></label>
+      </div>
+      <div class="qr-caja" id="qr-caja" hidden>
+        <div id="qr"></div>
+        <a id="qr-enlace" class="ayuda" target="_blank" rel="noopener">Abrir el enlace</a>
+      </div>
+    </details>
+  </section>
+
+  <p class="ayuda" style="text-align:center">¿Un viaje con muchos gastos y varias personas pagando? Usa los <a href="app.html#grupos">grupos</a>.</p>
+  <footer class="pie"><a href="privacidad.html">Privacidad</a><a href="aviso-legal.html">Aviso legal</a></footer>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/reparto.js"></script>
+<script src="js/qrcode.js"></script>
+<script>
+  const R = window.Reparto;
+  const $ = function (id) { return document.getElementById(id); };
+  let personas = 2, propina = 0, nExtras = 0;
+  let nombres = [];
+
+  // Fecha de hoy por defecto (se puede cambiar)
+  (function () { const d = new Date(); $("fecha").value = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); })();
+
+  $("menos").addEventListener("click", function () {
+    if (personas > Math.max(1, nombres.length)) { personas--; calcular(); }
+  });
+  $("mas").addEventListener("click", function () { if (personas < 99) { personas++; calcular(); } });
+  $("propinas").addEventListener("click", function (e) {
+    const b = e.target.closest("button"); if (!b) return;
+    propina = Number(b.dataset.p);
+    this.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+    calcular();
+  });
+
+  // --- Nombres de los amigos (opcionales) ---
+  function pintarNombres() {
+    const c = $("chips-nombres"); c.innerHTML = "";
+    const dl = $("lista-nombres"); dl.innerHTML = "";
+    nombres.forEach(function (n, i) {
+      const chip = document.createElement("span"); chip.className = "chip"; chip.textContent = n;
+      const x = document.createElement("button"); x.type = "button"; x.textContent = "×"; x.setAttribute("aria-label", "Quitar a " + n);
+      x.addEventListener("click", function () { nombres.splice(i, 1); pintarNombres(); calcular(); });
+      chip.appendChild(x); c.appendChild(chip);
+      const o = document.createElement("option"); o.value = n; dl.appendChild(o);
+    });
+  }
+  function anadirNombre() {
+    const n = $("nuevo-nombre").value.trim(); if (!n) return;
+    if (nombres.some(function (x) { return x.toLowerCase() === n.toLowerCase(); })) { $("nuevo-nombre").value = ""; return; }
+    nombres.push(n);
+    if (personas < nombres.length) personas = nombres.length;   // al menos tantas personas como nombres
+    $("nuevo-nombre").value = ""; $("nuevo-nombre").focus();
+    pintarNombres(); calcular();
+  }
+  $("add-nombre").addEventListener("click", anadirNombre);
+  $("nuevo-nombre").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); anadirNombre(); } });
+
+  // --- Pedidos aparte ---
+  $("add-extra").addEventListener("click", function () {
+    nExtras++;
+    const f = document.createElement("div"); f.className = "fila-miembro";
+    f.innerHTML = '<input type="text" id="ex-n-' + nExtras + '" class="ex-nombre" placeholder="Quién" aria-label="Quién" autocomplete="off" list="lista-nombres">' +
+                  '<input type="text" id="ex-i-' + nExtras + '" class="ex-importe" inputmode="decimal" placeholder="Importe €" aria-label="Importe aparte" style="max-width:130px">' +
+                  '<button type="button" class="g-borrar" aria-label="Quitar">×</button>';
+    f.querySelector("button").addEventListener("click", function () { f.remove(); calcular(); });
+    $("extras").appendChild(f);
+    f.querySelector("input").focus();
+  });
+  document.addEventListener("input", calcular);
+  $("redondear").addEventListener("change", calcular);
+
+  function conPropina(c) { return Math.round(c * (100 + propina) / 100); }
+  function arriba(c) { return $("redondear").checked ? Math.ceil(c / 100) * 100 : c; }
+  function fila(texto, importe) {
+    const f = document.createElement("div"); f.className = "fila-pago";
+    const t = document.createElement("span"); t.className = "texto-pago"; t.textContent = texto;
+    const i = document.createElement("span"); i.className = "importe"; i.textContent = importe;
+    f.append(t, i); return f;
+  }
+
+  function calcular() {
+    $("personas").textContent = personas;
+    const total = R.aCentimos($("total").value);
+    const err = $("res-error"); err.hidden = true;
+    const totalProp = conPropina(total);
+
+    // Cada asiento de la mesa: con nombre si lo hay
+    const gente = [];
+    for (let i = 0; i < personas; i++) gente.push(nombres[i] || "");
+    const extra = new Array(personas).fill(0);
+
+    // Asignar los pedidos aparte a su persona (por nombre) o a un asiento sin nombre
+    let sumaExtras = 0, problema = "";
+    document.querySelectorAll("#extras .fila-miembro").forEach(function (f, k) {
+      const imp = R.aCentimos(f.querySelector(".ex-importe").value);
+      if (imp <= 0) return;
+      const n = f.querySelector(".ex-nombre").value.trim() || ("Persona " + (k + 1));
+      let i = gente.findIndex(function (g) { return g && g.toLowerCase() === n.toLowerCase(); });
+      if (i === -1) { i = gente.findIndex(function (g) { return !g; }); if (i !== -1) gente[i] = n; }
+      if (i === -1) { problema = "«" + n + "» no está entre las personas de la mesa. Añade su nombre o una persona más."; return; }
+      extra[i] += imp; sumaExtras += imp;
+    });
+    if (!problema && sumaExtras > total && total) problema = "Lo pedido aparte supera el total de la cuenta.";
+    if (problema) { err.textContent = problema; err.hidden = false; }
+
+    const compartido = Math.max(0, totalProp - conPropina(sumaExtras));
+    const ids = gente.map(function (_, i) { return i; });
+    const partes = R.repartirIguales(compartido, ids);
+    const paga = ids.map(function (i) { return arriba(partes[i] + conPropina(extra[i])); });
+    const sumaPagos = paga.reduce(function (s, x) { return s + x; }, 0);
+    const todosIguales = paga.every(function (x) { return Math.abs(x - paga[0]) <= 1; });
+    const hayNombres = gente.some(function (g) { return g; });
+
+    const det = $("res-detalle"); det.innerHTML = "";
+    const lineas = [];
+    if (todosIguales && !hayNombres) {
+      $("res-titulo").textContent = "Cada uno paga";
+      $("res-cifra").textContent = R.eur(paga[0] || 0);
+      lineas.push("Cada uno: " + R.eur(paga[0] || 0));
+    } else {
+      $("res-titulo").textContent = todosIguales ? "Cada uno paga" : "Lo que paga cada uno";
+      $("res-cifra").textContent = todosIguales ? R.eur(paga[0] || 0) : R.eur(totalProp);
+      if (!todosIguales) $("res-titulo").textContent = "Total a pagar";
+      // Personas con nombre o con pedido aparte, una por una
+      ids.forEach(function (i) {
+        if (!gente[i]) return;
+        const texto = gente[i] + (extra[i] ? " (incluye " + R.eur(conPropina(extra[i])) + " aparte)" : "");
+        det.appendChild(fila(texto, R.eur(paga[i])));
+        lineas.push(gente[i] + ": " + R.eur(paga[i]));
+      });
+      // El resto, agrupado
+      const sinNombre = ids.filter(function (i) { return !gente[i]; });
+      if (sinNombre.length) {
+        const t = sinNombre.length === 1 ? "La otra persona" : "Cada uno de los otros " + sinNombre.length;
+        det.appendChild(fila(t, R.eur(paga[sinNombre[0]])));
+        lineas.push(t + ": " + R.eur(paga[sinNombre[0]]));
+      }
+    }
+
+    const exacto = !$("redondear").checked && compartido % personas !== 0;
+    $("res-nota").textContent = total
+      ? "Total " + R.eur(totalProp) + (propina ? " (con " + propina + " % de propina)" : "") +
+        (exacto ? ". Los céntimos que no cuadran los ponen los primeros." : "") +
+        (sumaPagos > totalProp ? ". Sobran " + R.eur(sumaPagos - totalProp) + "." : "")
+      : "";
+
+    // Mensaje de WhatsApp con motivo y fecha
+    const motivo = $("motivo").value.trim();
+    const f = $("fecha").value ? new Date($("fecha").value + "T12:00").toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }) : "";
+    const msg = "🧾 *" + (motivo || "Cuenta a dividir") + "*" + (f ? "\n" + f.charAt(0).toUpperCase() + f.slice(1) : "") + "\n" +
+                "Total " + R.eur(totalProp) + (propina ? " (con " + propina + " % de propina)" : "") + " · " + personas + " personas\n\n" +
+                lineas.map(function (l) { const i = l.lastIndexOf(": "); return "• " + l.slice(0, i) + ": *" + l.slice(i + 2) + "*"; }).join("\n") +
+                "\n\n_Calculado con Saldamos_";
+    $("wa").href = R.enlaceWhatsApp(msg, "");
+    $("wa").hidden = !total || !!problema;
+
+    // Datos para el QR de mesa: todo viaja en el enlace (#), no se guarda en ningún servidor
+    const filas = [];
+    ids.forEach(function (i) { if (gente[i]) filas.push([gente[i], paga[i]]); });
+    const sinN = ids.filter(function (i) { return !gente[i]; });
+    ultimaCuenta = (total && !problema) ? {
+      m: motivo.slice(0, 60), f: $("fecha").value, t: totalProp, p: propina, n: personas,
+      l: filas, o: sinN.length ? [sinN.length, paga[sinN[0]]] : null,
+      q: $("mesa-pagador").value.trim().slice(0, 40), b: $("mesa-tel").value.replace(/[^\d+]/g, "").slice(0, 16)
+    } : null;
+    if ($("mesa").open) pintarQR();
+  }
+  let ultimaCuenta = null, ultimoQR = "";
+  function enlaceCuenta(c) {
+    const json = JSON.stringify(c);
+    const b64 = btoa(unescape(encodeURIComponent(json))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    return new URL("cuenta.html", location.href).href.split("#")[0] + "#" + b64;
+  }
+  function pintarQR() {
+    const caja = $("qr-caja");
+    if (!ultimaCuenta) { caja.hidden = true; return; }
+    const url = enlaceCuenta(ultimaCuenta);
+    caja.hidden = false;
+    $("qr-enlace").href = url;
+    if (url === ultimoQR) return;
+    ultimoQR = url;
+    $("qr").innerHTML = "";
+    if (window.qrcode) {
+      const q = qrcode(0, "L"); q.addData(url); q.make();
+      $("qr").innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+    } else $("qr").textContent = "No se pudo cargar el generador de QR. Comparte el enlace.";
+  }
+  $("mesa").addEventListener("toggle", pintarQR);
+  $("mesa-pagador").addEventListener("input", calcular);
+  $("mesa-tel").addEventListener("input", calcular);
+  calcular();
+</script>
+<script src="js/extras-demo.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

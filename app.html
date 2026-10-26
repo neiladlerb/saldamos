@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="img/icono.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b6e4f">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Saldamos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+<!-- =====================================================================
+     LA APLICACIÓN (solo con sesión iniciada).
+     Es el mismo diseño del prototipo; lo que cambia es de dónde salen
+     los datos: ahora de Supabase, filtrados por usuario.
+     ===================================================================== -->
+<main class="libreta" id="app">
+  <div class="barra-sup">
+    <a class="marca" href="app.html"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect class="l1" x="6" y="6" width="52" height="52" rx="16"/><path class="l3" d="M19 33l9 9 18-20"/></svg>saldamos</a>
+    <details class="menu-cuenta" id="menu-cuenta">
+      <summary class="boton-sec" id="nombre-usuario">Mi cuenta</summary>
+      <div class="opciones">
+        <a href="admin.html" id="enlace-admin" hidden>Back office</a>
+        <a href="cobros.html" id="enlace-cobros">Cobrar con Bizum Pay</a>
+        <button type="button" id="b-exportar">Descargar mis datos</button>
+        <button type="button" id="b-salir">Cerrar sesión</button>
+        <button type="button" class="peligro" id="b-borrar-cuenta">Borrar mi cuenta</button>
+      </div>
+    </details>
+  </div>
+
+  <section class="tarjeta" id="bloqueado" hidden>
+    <h2>Cuenta bloqueada</h2>
+    <p style="margin:0">Tu cuenta está bloqueada. Si crees que es un error, escríbenos al email que aparece en el <a href="aviso-legal.html">aviso legal</a>.</p>
+  </section>
+
+  <header>
+    <h1 id="titulo">Mis <span>tareas</span></h1>
+    <span class="sync" id="sync">Conectando con el servidor…</span>
+  </header>
+
+  <nav class="pestanas" role="tablist">
+    <button type="button" role="tab" id="tab-tareas" aria-selected="true" data-panel="tareas">Tareas</button>
+    <button type="button" role="tab" id="tab-gastos" aria-selected="false" data-panel="gastos">Gastos</button>
+    <button type="button" role="tab" id="tab-grupos" aria-selected="false" data-panel="grupos">Grupos</button>
+    <button type="button" role="tab" id="tab-deudas" aria-selected="false" data-panel="deudas">Deudas</button>
+  </nav>
+
+  <!-- ===== Panel de TAREAS ===== -->
+  <section class="panel" id="panel-tareas">
+  <p class="resumen" id="resumen">Cargando tus tareas…</p>
+  <div class="alertas" id="alertas"></div>
+
+  <form id="formulario">
+    <input type="text" id="nueva-tarea" placeholder="Escribe una tarea" autocomplete="off" aria-label="Tarea">
+    <input type="date" id="nueva-fecha" aria-label="Fecha límite">
+    <input type="time" id="nueva-hora" aria-label="Hora del aviso">
+    <input type="text" id="nueva-para" placeholder="Con quién (opcional)" aria-label="Compromiso con" autocomplete="off">
+    <button class="anadir" type="submit">Añadir</button>
+  </form>
+  <p class="ayuda">Fecha, hora y «con quién» son opcionales. Si es un compromiso con alguien, al terminarla podrás enviarle un «Hecho» por WhatsApp para que te dé su conformidad.</p>
+
+  <ul id="lista"></ul>
+  <p class="vacio" id="vacio" hidden>No hay tareas todavía. Escribe la primera arriba y aparecerá también en tu móvil.</p>
+  </section>
+
+  <!-- ===== Panel de GASTOS (nuevo en fase 4) ===== -->
+  <section class="panel" id="panel-gastos" hidden>
+    <div class="fila-titulo">
+      <h2>Resumen</h2>
+      <select class="filtro" id="g-mes" aria-label="Mes a mostrar"></select>
+    </div>
+    <div class="cifras">
+      <div class="cifra"><small>Mi gasto</small><b id="c-gasto">0,00 €</b></div>
+      <div class="cifra positivo"><small>Me deben</small><b id="c-medeben">0,00 €</b></div>
+      <div class="cifra negativo"><small>Debo</small><b id="c-debo">0,00 €</b></div>
+    </div>
+    <div class="mes-30" id="mes-30" hidden></div>
+
+    <h2>Cuentas pendientes con personas</h2>
+    <div class="saldos" id="saldos"></div>
+
+    <h2>Mi gasto por categoría</h2>
+    <div class="barras" id="barras"></div>
+
+    <div class="escanear">
+      <label class="boton-sec" for="g-foto">📷 Escanear ticket o factura</label>
+      <input type="file" id="g-foto" accept="image/*" hidden>
+      <span class="ayuda" id="g-escaneo">Haz una foto o elige una imagen del ticket y rellenamos el gasto. Se lee en tu móvil: la imagen no se sube a ningún sitio.</span>
+    </div>
+    <details class="nuevo" id="caja-nuevo">
+      <summary>+ Anotar un gasto</summary>
+      <form id="form-gasto" novalidate>
+        <div class="campos">
+          <input type="text" id="g-concepto" placeholder="Concepto (ej. Cena con amigos)" aria-label="Concepto" autocomplete="off">
+          <input type="date" id="g-fecha" aria-label="Fecha">
+          <select id="g-categoria" aria-label="Categoría"></select>
+        </div>
+        <p class="etiqueta">Desglose: ítems o personas</p>
+        <div id="lineas-form" class="g-lineas"></div>
+        <div class="acciones-lineas">
+          <button type="button" class="boton-sec" id="add-linea">+ Añadir línea</button>
+          <input type="text" inputmode="decimal" id="g-total-repartir" placeholder="Total €" aria-label="Total a repartir">
+          <button type="button" class="boton-sec" id="repartir">Repartir a partes iguales</button>
+          <span class="total-form" id="total-form">Total: 0,00 €</span>
+        </div>
+        <p class="error" id="g-error" hidden></p>
+        <button class="anadir" type="submit">Guardar gasto</button>
+      </form>
+    </details>
+    <datalist id="personas"></datalist>
+
+    <h2>Movimientos</h2>
+    <ul id="lista-gastos"></ul>
+    <p class="vacio" id="vacio-gastos" hidden>No hay gastos en este periodo. Pulsa «Anotar un gasto» para añadir el primero.</p>
+  </section>
+  <!-- ===== Panel de DEUDAS: préstamos, hipoteca, créditos, tarjeta en cuotas ===== -->
+  <section class="panel" id="panel-deudas" hidden>
+    <p class="resumen" style="margin:0">Préstamos, hipoteca, créditos y compras en cuotas: cuánto debes en total y cuánto pagas cada mes.</p>
+    <div class="cifras">
+      <div class="cifra negativo"><small>Debo en total</small><b id="dd-total">0,00 €</b></div>
+      <div class="cifra"><small>Cuotas este mes</small><b id="dd-cuotas">0,00 €</b></div>
+      <div class="cifra positivo"><small>Sin deudas en</small><b id="dd-fin">—</b></div>
+    </div>
+
+    <section class="tarjeta dd-liquidez" id="dd-liquidez">
+      <div class="fila-titulo"><h2 style="margin:0">Tu liquidez</h2><span class="dd-estado" id="dd-estado"></span></div>
+      <label class="dd-ingresos">Tus ingresos netos al mes <input type="text" inputmode="decimal" id="dd-ingresos" placeholder="Ej. 2.400" autocomplete="off"></label>
+      <div class="dd-medidor" id="dd-medidor" hidden><span id="dd-medidor-barra"></span><i id="dd-medidor-limite" title="35 %"></i></div>
+      <p class="ayuda" id="dd-liquidez-texto" style="margin:0">Pon tus ingresos para ver qué parte se va en deudas. Solo lo ves tú.</p>
+    </section>
+
+    <h2>Próximos 12 meses</h2>
+    <div class="tarjeta dd-grafico" id="dd-grafico"></div>
+
+    <h2>Cargos de este mes</h2>
+    <div class="g-lineas" id="dd-calendario"></div>
+
+    <h2>Mis deudas</h2>
+    <ul id="dd-lista"></ul>
+    <p class="vacio" id="dd-vacio" hidden>Aún no has apuntado ninguna deuda. Empieza por la que más te preocupe.</p>
+    <p class="mensaje" id="dd-consejo" hidden></p>
+
+    <details class="nuevo" id="dd-caja">
+      <summary id="dd-caja-titulo">+ Añadir una deuda</summary>
+      <form id="dd-form" novalidate class="grid-form">
+        <div class="campos">
+          <select id="dd-tipo" aria-label="Tipo">
+            <option value="prestamo">Préstamo personal</option><option value="hipoteca">Hipoteca</option><option value="consumo">Crédito al consumo</option>
+            <option value="tarjeta">Tarjeta / compra en cuotas</option><option value="comercial">Crédito de una tienda</option><option value="otro">Otra</option>
+          </select>
+          <input type="text" id="dd-nombre" maxlength="80" placeholder="Nombre (ej. Préstamo coche)" aria-label="Nombre" autocomplete="off">
+          <input type="text" id="dd-entidad" maxlength="60" placeholder="Banco o tienda (opcional)" aria-label="Entidad" autocomplete="off">
+        </div>
+        <div class="dd-campos">
+          <label>Cuota al mes <input type="text" inputmode="decimal" id="dd-cuota" placeholder="0,00 €"></label>
+          <label>Lo que queda por pagar <input type="text" inputmode="decimal" id="dd-saldo" placeholder="0,00 €"></label>
+          <label>o cuotas que quedan <input type="text" inputmode="numeric" id="dd-restantes" placeholder="Ej. 12"></label>
+          <label>TAE % <input type="text" inputmode="decimal" id="dd-tae" placeholder="0 si es sin intereses"></label>
+          <label>Día del cargo <input type="number" min="1" max="31" id="dd-dia" placeholder="1-31"></label>
+          <label>Importe pedido <input type="text" inputmode="decimal" id="dd-original" placeholder="Opcional"></label>
+        </div>
+        <p class="ayuda" id="dd-previa" style="margin:0"></p>
+        <p class="error" id="dd-error" hidden></p>
+        <div class="fila-miembro">
+          <button class="anadir" type="submit" id="dd-guardar">Guardar deuda</button>
+          <button class="boton-sec" type="button" id="dd-cancelar" hidden>Cancelar</button>
+        </div>
+      </form>
+    </details>
+  </section>
+  <!-- ===== Panel de GRUPOS (fase 6): gastos compartidos y cobros por WhatsApp ===== -->
+  <section class="panel" id="panel-grupos" hidden>
+    <!-- Vista 1: lista de grupos -->
+    <div id="grupos-lista-vista" class="panel">
+      <div class="fila-titulo">
+        <p class="resumen" style="margin:0">Viajes, cenas, regalos… Anota quién pagó qué y la app calcula quién debe a quién.</p>
+        <a class="boton-sec" href="calculadora.html">Calculadora rápida</a>
+      </div>
+      <ul id="lista-grupos"></ul>
+      <p class="vacio" id="vacio-grupos" hidden>Aún no tienes grupos. Crea el primero abajo.</p>
+      <details class="nuevo" id="caja-nuevo-grupo">
+        <summary>+ Crear un grupo</summary>
+        <form id="form-grupo" novalidate class="grid-form">
+          <input type="text" id="ng-nombre" placeholder="Nombre (ej. Viaje concierto ACDC)" aria-label="Nombre del grupo" autocomplete="off">
+          <p class="etiqueta">Personas del grupo</p>
+          <div id="ng-miembros" class="chips"></div>
+          <div class="fila-miembro">
+            <input type="text" id="ng-persona" placeholder="Nombre" aria-label="Nombre de la persona" autocomplete="off">
+            <input type="tel" id="ng-telefono" placeholder="Móvil con prefijo (+34…), opcional" aria-label="Teléfono">
+            <button type="button" class="boton-sec" id="ng-anadir">Añadir</button>
+          </div>
+          <p class="error" id="ng-error" hidden></p>
+          <button class="anadir" type="submit">Crear grupo</button>
+        </form>
+      </details>
+    </div>
+
+    <!-- Vista 2: detalle de un grupo -->
+    <div id="grupo-detalle-vista" class="panel" hidden>
+      <div class="fila-titulo">
+        <button type="button" class="enlace-boton" id="gd-volver">← Todos los grupos</button>
+        <button type="button" class="boton-sec peligro-texto" id="gd-borrar">Borrar grupo</button>
+      </div>
+      <h2 id="gd-nombre" class="titulo-grupo"></h2>
+      <p class="resumen" id="gd-resumen" style="margin:0"></p>
+
+      <section class="tarjeta">
+        <h2>Para quedar en paz</h2>
+        <div id="gd-avisos" class="g-lineas" hidden></div>
+        <div id="gd-plan" class="g-lineas"></div>
+        <div class="acciones-lineas">
+          <a class="anadir boton-wa" id="gd-wa-grupo" target="_blank" rel="noopener">Enviar resumen por WhatsApp</a>
+        </div>
+      </section>
+
+      <section class="tarjeta">
+        <h2>Cada persona</h2>
+        <div id="gd-personas" class="g-lineas"></div>
+      </section>
+
+      <section class="tarjeta">
+        <h2>Enlace para el grupo</h2>
+        <p class="ayuda" style="margin:0">Quien tenga el enlace ve las cuentas sin necesidad de cuenta, pero no puede cambiarlas.</p>
+        <label class="casilla"><input type="checkbox" id="gd-compartido"> <span>Enlace activado</span></label>
+        <div class="fila-miembro">
+          <input type="text" id="gd-enlace" readonly aria-label="Enlace público">
+          <button type="button" class="boton-sec" id="gd-copiar">Copiar</button>
+          <button type="button" class="boton-sec" id="gd-regenerar">Nuevo enlace</button>
+          <a class="boton-sec" id="gd-abrir" href="#">Lo que ve la otra persona</a>
+        </div>
+      </section>
+
+      <h2>Gastos del grupo</h2>
+      <ul id="gd-gastos"></ul>
+      <details class="nuevo" id="gd-caja-gasto" open>
+        <summary>+ Añadir un gasto</summary>
+        <form id="gd-form-gasto" novalidate class="grid-form">
+          <div class="campos">
+            <input type="text" id="gg-concepto" placeholder="Concepto (ej. Hotel)" aria-label="Concepto" autocomplete="off">
+            <input type="text" id="gg-importe" inputmode="decimal" placeholder="Total €" aria-label="Importe total">
+            <input type="date" id="gg-fecha" aria-label="Fecha">
+          </div>
+          <div class="fila-miembro parte-grupo">
+            <label for="gg-parte-modo" class="etiqueta" style="margin:0">Al grupo</label>
+            <select id="gg-parte-modo" aria-label="Qué parte del importe va al grupo">
+              <option value="todo">Todo el importe</option>
+              <option value="importe">Solo una parte (€)</option>
+              <option value="pct">Solo un porcentaje (%)</option>
+            </select>
+            <input type="text" id="gg-parte-valor" inputmode="decimal" placeholder="0,00" aria-label="Parte que va al grupo" hidden>
+            <span class="ayuda" id="gg-parte-texto"></span>
+          </div>
+          <div id="gg-pres" hidden>
+            <p class="etiqueta">Presupuesto del grupo</p>
+            <div class="fila-miembro">
+              <label class="casilla"><input type="radio" name="gg-tipo" value="presupuesto" checked> <span>Dentro del presupuesto</span></label>
+              <label class="casilla"><input type="radio" name="gg-tipo" value="extra"> <span>Gasto extra (lo aprueba la otra parte)</span></label>
+              <select id="gg-categoria" aria-label="Categoría del presupuesto"></select>
+            </div>
+          </div>
+          <p class="etiqueta">¿Quién pagó?</p>
+          <div class="fila-miembro">
+            <select id="gg-pagador" aria-label="Quién pagó"></select>
+            <label class="casilla"><input type="checkbox" id="gg-varios"> <span>Pagaron varios</span></label>
+          </div>
+          <div id="gg-pagos-varios" class="reparto-tabla" hidden></div>
+          <div id="gg-rep-bloque">
+          <p class="etiqueta">¿Entre quiénes se reparte?</p>
+          <div class="fila-miembro">
+            <label class="casilla"><input type="radio" name="gg-modo" value="iguales" checked> <span>A partes iguales</span></label>
+            <label class="casilla"><input type="radio" name="gg-modo" value="importes"> <span>Cada uno un importe</span></label>
+            <label class="casilla"><input type="radio" name="gg-modo" value="porcentaje"> <span>Por porcentaje</span></label>
+          </div>
+          <div id="gg-reparto" class="reparto-tabla"></div>
+          </div>
+          <p class="ayuda" id="gg-cuadre" style="margin:0"></p>
+          <p class="error" id="gg-error" hidden></p>
+          <button class="anadir" type="submit">Guardar gasto</button>
+        </form>
+      </details>
+
+      <h2>Personas y datos de cobro</h2>
+      <p class="ayuda" style="margin:0">El dinero nunca pasa por Saldamos: cada uno paga directo por Bizum o transferencia. Si marcas «Mostrar en el enlace», quien abra el enlace verá el Bizum y el IBAN de esa persona para pagarle. Pide permiso antes de publicar los datos de otra persona.</p>
+      <div id="gd-miembros" class="g-lineas"></div>
+      <div class="fila-miembro">
+        <input type="text" id="gm-nombre" placeholder="Añadir persona" aria-label="Nombre" autocomplete="off">
+        <input type="tel" id="gm-telefono" placeholder="Móvil con prefijo, opcional" aria-label="Teléfono">
+        <button type="button" class="boton-sec" id="gm-anadir">Añadir</button>
+      </div>
+
+      <h2>Pagos ya hechos</h2>
+      <div id="gd-liquidaciones" class="g-lineas"></div>
+    </div>
+  </section>
+</main>
+
+<div class="avisos" id="avisos" aria-live="polite"></div>
+
+<script src="js/config.js"></script>
+<script src="js/arranque.js"></script>
+<script src="js/comun.js"></script>
+<script src="js/tareas.js"></script>
+<script src="js/gastos.js"></script>
+<script src="js/reparto.js"></script>
+<script src="js/grupos.js"></script>
+<script src="js/presupuesto.js"></script>
+<script src="js/deudas.js"></script>
+<script src="js/ticket.js"></script>
+<script src="js/dimelo.js"></script>
+<script src="js/cuenta.js"></script>
+<script src="js/sugerencias.js"></script>
+<script src="js/extras-demo.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

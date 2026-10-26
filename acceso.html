@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="img/icono.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b6e4f">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Saldamos · Entrar</title>
+<meta name="description" content="Tus tareas con avisos y tus gastos compartidos, en el ordenador y en el móvil.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+<!-- =====================================================================
+     PORTADA: registro, inicio de sesión y "he olvidado mi contraseña".
+     Las tres son la misma página; según la pestaña se ve un formulario.
+     ===================================================================== -->
+<main class="acceso">
+  <header>
+    <h1><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect class="l1" x="6" y="6" width="52" height="52" rx="16"/><path class="l3" d="M19 33l9 9 18-20"/></svg>saldamos</h1>
+    <p class="intro" style="font-weight:600">Cuentas claras, amistades largas.</p>
+    <p class="intro">Tus tareas con avisos y tus gastos compartidos: quién te debe y a quién debes. En el ordenador y en el móvil.</p>
+  </header>
+
+  <nav class="pestanas" role="tablist">
+    <button type="button" role="tab" aria-selected="true" data-vista="entrar">Entrar</button>
+    <button type="button" role="tab" aria-selected="false" data-vista="registro">Crear cuenta</button>
+  </nav>
+
+  <section class="tarjeta" id="vista-entrar">
+    <p class="mensaje ok" id="aviso-demo" style="margin:0" hidden>Demo: pulsa «Entrar» (sirve cualquier email y contraseña).</p>
+    <form id="form-entrar" novalidate>
+      <label>Email <input type="email" id="e-email" autocomplete="email" required></label>
+      <label>Contraseña <input type="password" id="e-pass" autocomplete="current-password" required></label>
+      <button class="anadir" type="submit">Entrar</button>
+    </form>
+    <button type="button" class="enlace-boton" id="ir-olvido">He olvidado mi contraseña</button>
+    <p class="mensaje" id="msg-entrar" hidden></p>
+  </section>
+
+  <section class="tarjeta" id="vista-registro" hidden>
+    <form id="form-registro" novalidate>
+      <label>Nombre <input type="text" id="r-nombre" autocomplete="name" required></label>
+      <label>Email <input type="email" id="r-email" autocomplete="email" required></label>
+      <label>Contraseña (mínimo 8 caracteres) <input type="password" id="r-pass" autocomplete="new-password" minlength="8" required></label>
+      <label class="casilla"><input type="checkbox" id="r-acepto"> <span>He leído y acepto la <a href="privacidad.html" target="_blank">política de privacidad</a> y el <a href="aviso-legal.html" target="_blank">aviso legal</a>.</span></label>
+      <button class="anadir" type="submit">Crear cuenta</button>
+    </form>
+    <p class="mensaje" id="msg-registro" hidden></p>
+  </section>
+
+  <section class="tarjeta" id="vista-olvido" hidden>
+    <p style="margin:0">Escribe tu email y te enviaremos un enlace para poner una contraseña nueva.</p>
+    <form id="form-olvido" novalidate>
+      <label>Email <input type="email" id="o-email" autocomplete="email" required></label>
+      <button class="anadir" type="submit">Enviar enlace</button>
+    </form>
+    <button type="button" class="enlace-boton" id="volver-entrar">Volver a entrar</button>
+    <p class="mensaje" id="msg-olvido" hidden></p>
+  </section>
+
+  <p class="intro" style="text-align:center">¿Solo quieres dividir una cuenta ahora? <a href="calculadora.html">Usa la calculadora rápida</a>, sin crear cuenta.</p>
+
+  <footer class="pie">
+    <a href="privacidad.html">Privacidad</a>
+    <a href="aviso-legal.html">Aviso legal</a>
+  </footer>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/arranque.js"></script>
+<script src="js/comun.js"></script>
+<script>
+  // En la demo sirve cualquier email: lo dejamos ya escrito
+  if (window.MODO_DEMO) {
+    document.getElementById("aviso-demo").hidden = false;
+    document.getElementById("e-email").value = "demo@saldamos.app";
+    document.getElementById("e-pass").value = "demo1234";
+  }
+
+  // Si ya hay sesión abierta, entramos directamente en la app
+  sesionActual().then(function (s) { if (s) location.replace("app.html"); });
+
+  // --- Cambiar entre vistas ---
+  function mostrar(vista) {
+    ["entrar", "registro", "olvido"].forEach(function (v) {
+      document.getElementById("vista-" + v).hidden = v !== vista;
+    });
+    document.querySelectorAll(".pestanas button").forEach(function (b) {
+      b.setAttribute("aria-selected", String(b.dataset.vista === vista || (vista === "olvido" && b.dataset.vista === "entrar")));
+    });
+  }
+  document.querySelectorAll(".pestanas button").forEach(function (b) {
+    b.addEventListener("click", function () { mostrar(b.dataset.vista); });
+  });
+  document.getElementById("ir-olvido").addEventListener("click", function () { mostrar("olvido"); });
+  document.getElementById("volver-entrar").addEventListener("click", function () { mostrar("entrar"); });
+  if (location.hash === "#registro") mostrar("registro");
+
+  function mensaje(id, texto, ok) {
+    const p = document.getElementById(id);
+    p.textContent = texto;
+    p.className = "mensaje " + (ok ? "ok" : "mal");
+    p.hidden = false;
+  }
+  function ocupado(form, si) {
+    const b = form.querySelector("button[type=submit]");
+    b.disabled = si; b.style.opacity = si ? .6 : 1;
+  }
+
+  // --- ENTRAR ---
+  document.getElementById("form-entrar").addEventListener("submit", async function (ev) {
+    ev.preventDefault();
+    const email = document.getElementById("e-email").value.trim();
+    const pass = document.getElementById("e-pass").value;
+    if (!email || !pass) return mensaje("msg-entrar", "Escribe tu email y tu contraseña.");
+    ocupado(this, true);
+    const { error } = await sb.auth.signInWithPassword({ email: email, password: pass });
+    ocupado(this, false);
+    if (error) return mensaje("msg-entrar", traducirError(error));
+    location.replace("app.html");
+  });
+
+  // --- CREAR CUENTA ---
+  // Supabase envía un email de confirmación; hasta que no se confirma, no se puede entrar.
+  document.getElementById("form-registro").addEventListener("submit", async function (ev) {
+    ev.preventDefault();
+    const nombre = document.getElementById("r-nombre").value.trim();
+    const email = document.getElementById("r-email").value.trim();
+    const pass = document.getElementById("r-pass").value;
+    if (!nombre || !email) return mensaje("msg-registro", "Escribe tu nombre y tu email.");
+    if (pass.length < 8) return mensaje("msg-registro", "La contraseña debe tener al menos 8 caracteres.");
+    if (!document.getElementById("r-acepto").checked) return mensaje("msg-registro", "Para crear la cuenta tienes que aceptar la política de privacidad.");
+    ocupado(this, true);
+    const { data, error } = await sb.auth.signUp({
+      email: email,
+      password: pass,
+      options: {
+        data: { nombre: nombre, acepta_privacidad: "true" },   // se guarda en el perfil
+        emailRedirectTo: new URL("app.html", location.href).href
+      }
+    });
+    ocupado(this, false);
+    if (error) return mensaje("msg-registro", traducirError(error));
+    if (data.session) return location.replace("app.html");   // si la confirmación por email está desactivada
+    mensaje("msg-registro", "¡Cuenta creada! Te hemos enviado un email a " + email + ". Pulsa el enlace para confirmarla y después entra.", true);
+    this.reset();
+  });
+
+  // --- HE OLVIDADO MI CONTRASEÑA ---
+  document.getElementById("form-olvido").addEventListener("submit", async function (ev) {
+    ev.preventDefault();
+    const email = document.getElementById("o-email").value.trim();
+    if (!email) return mensaje("msg-olvido", "Escribe tu email.");
+    ocupado(this, true);
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: new URL("recuperar.html", location.href).href
+    });
+    ocupado(this, false);
+    if (error) return mensaje("msg-olvido", traducirError(error));
+    // Por seguridad, el mensaje es el mismo exista o no la cuenta
+    mensaje("msg-olvido", "Si existe una cuenta con ese email, recibirás un enlace en unos minutos.", true);
+  });
+</script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

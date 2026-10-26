@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="img/icono.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b6e4f">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Con enlaces /c/<código> y /g/<código>, base="/" hace que css/ y js/ se busquen en la raíz -->
+<base href="/">
+<!-- Vista previa al compartir por WhatsApp (tarjeta con imagen). Cuando tengas dominio,
+     pon la dirección completa en og:image, p. ej. https://saldamos.app/img/og-grupo.png -->
+<meta property="og:site_name" content="Saldamos">
+<meta property="og:title" content="Cuentas del grupo">
+<meta property="og:description" content="Mira cuánto te toca pagar y a quién, y avisa cuando hayas pagado. Sin cuenta.">
+<meta property="og:image" content="/img/og-grupo.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<title>Saldamos · Cuentas del grupo</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+<!-- =====================================================================
+     PÁGINA PÚBLICA DE UN GRUPO (la que se abre desde WhatsApp).
+     No hace falta cuenta. Solo lectura. Los datos llegan con la función
+     grupo_publico(token) de la base de datos.
+     ===================================================================== -->
+<main class="libreta">
+  <a class="marca" href="index.html"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect class="l1" x="6" y="6" width="52" height="52" rx="16"/><path class="l3" d="M19 33l9 9 18-20"/></svg>saldamos</a>
+  <p class="cargando" id="cargando">Cargando las cuentas…</p>
+  <p class="mensaje mal" id="error" hidden>Este enlace no existe o se ha desactivado. Pide a quien te lo envió uno nuevo.</p>
+
+  <div id="contenido" class="panel" hidden>
+    <header>
+      <h1 id="nombre"></h1>
+      <p class="resumen" id="resumen"></p>
+    </header>
+
+    <section class="tarjeta">
+      <label class="etiqueta" for="quien" style="margin:0">¿Quién eres?</label>
+      <select class="filtro" id="quien"></select>
+      <div id="mi-detalle" hidden>
+        <p class="resultado-grande" id="mi-cifra"></p>
+        <p class="resumen" id="mi-explica" style="margin:0 0 8px"></p>
+        <div id="mis-pagos" class="g-lineas"></div>
+        <p class="etiqueta">Tu parte de cada gasto</p>
+        <div id="mis-lineas" class="g-lineas"></div>
+      </div>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Para quedar en paz</h2>
+      <div id="plan" class="g-lineas"></div>
+    </section>
+
+    <h2>Gastos</h2>
+    <ul id="gastos"></ul>
+
+    <section class="tarjeta">
+      <p style="margin:0">¿Quieres hacer tus propias cuentas con amigos?</p>
+      <div class="fila-miembro">
+        <a class="anadir" href="acceso.html#registro" style="text-decoration:none">Crear cuenta gratis</a>
+        <a class="boton-sec" href="calculadora.html">Calculadora rápida</a>
+      </div>
+    </section>
+  </div>
+  <footer class="pie"><a href="privacidad.html">Privacidad</a><a href="aviso-legal.html">Aviso legal</a></footer>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/arranque.js"></script>
+<script src="js/comun.js"></script>
+<script src="js/reparto.js"></script>
+<script src="js/presupuesto.js"></script>
+<script>
+  const R = window.Reparto;
+  const $ = function (id) { return document.getElementById(id); };
+  function el(tag, clase, texto) { const e = document.createElement(tag); if (clase) e.className = clase; if (texto != null) e.textContent = texto; return e; }
+  let g = null;
+
+  // Carga (y recarga tras aprobar, proponer o avisar) las cuentas del grupo
+  async function cargar() {
+    const token = codigoDeEnlace();
+    const r = await sb.rpc("grupo_publico", { t: token });
+    $("cargando").hidden = true;
+    if (r.error || !r.data) { $("error").hidden = false; return; }
+    g = r.data;
+    $("contenido").hidden = false;
+    pintar();
+    const sel = $("quien"); if (sel.value) sel.dispatchEvent(new Event("change"));
+  }
+  window.recargarGrupoPublico = cargar;
+  cargar();
+
+  function pintar() {
+    const nom = function (id) { return R.nombre(g, id); };
+    document.title = g.nombre + " · cuentas";
+    $("nombre").textContent = g.nombre;
+    $("resumen").textContent = "Gasto total " + R.eur(R.total(g)) + " entre " + g.miembros.length + " personas · actualizado " +
+      new Date(g.actualizado).toLocaleDateString("es-ES", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+
+    const sel = $("quien");
+    const antes = sel.value;
+    sel.innerHTML = "";
+    const o0 = el("option", null, "Elige tu nombre"); o0.value = ""; sel.appendChild(o0);
+    g.miembros.forEach(function (m) { const o = el("option", null, m.nombre); o.value = m.id; sel.appendChild(o); });
+    if (antes) sel.value = antes;
+
+    const plan = R.plan(g);
+    const caja = $("plan"); caja.innerHTML = "";
+    if (!plan.length) caja.appendChild(el("p", "ayuda", "Todo saldado: nadie debe nada."));
+    plan.forEach(function (p) {
+      const f = el("div", "fila-pago");
+      const t = el("span", "texto-pago"); t.append(el("b", null, nom(p.de)), document.createTextNode(" paga a "), el("b", null, nom(p.a)));
+      f.append(t, el("span", "importe", R.eur(p.importe)));
+      caja.appendChild(f);
+    });
+
+    const ul = $("gastos"); ul.innerHTML = "";
+    g.gastos.forEach(function (x) {
+      const li = el("li", "gasto"); const cab = el("div", "g-cab"); const c = el("div", "cuerpo");
+      const pag = x.pagos.map(function (p) { return nom(p.miembro) + (x.pagos.length > 1 ? " " + R.eur(p.importe) : ""); }).join(", ");
+      c.append(el("strong", null, x.concepto), el("span", "g-meta", "Pagó " + pag));
+      const eti = x.estado === "anulado" ? ["anulado", "Anulado"] : x.estado === "pendiente" ? ["pendiente", "Pendiente de aprobar"] :
+        x.estado === "rechazado" ? ["rechazado", "Rechazado"] : x.estado === "aprobado" ? ["aprobado", "Extra aprobado"] : x.presupuesto ? ["pres", "Del presupuesto" + (x.categoria ? " · " + x.categoria : "")] : null;
+      if (eti) c.appendChild(el("span", "etiqueta-gasto " + eti[0], eti[1]));
+      if (x.estado === "anulado" || x.estado === "rechazado") li.classList.add("tachado");
+      cab.append(c, el("span", "g-total", R.eur(x.importe)));
+      li.appendChild(cab); ul.appendChild(li);
+    });
+    if (window.alPintarPublico) window.alPintarPublico(g, codigoDeEnlace(), cargar);
+  }
+
+  // Tarjeta «Cómo pagar»: datos de cobro (si su dueño los publicó) y botón «Ya he pagado».
+  // El dinero va directo por Bizum o transferencia; Saldamos nunca lo toca.
+  function comoPagar(yoId, p) {
+    const acreedor = g.miembros.find(function (m) { return m.id === p.a; }) || {};
+    const caja = el("div", "como-pagar");
+    const cab = el("div", "fila-pago"); cab.style.borderTop = "0"; cab.style.padding = "0";
+    cab.append(el("span", "texto-pago", "Pagas a " + (acreedor.nombre || "?")), el("span", "importe", R.eur(p.importe)));
+    caja.appendChild(cab);
+    function dato(etiqueta, valor) {
+      const f = el("div", "dato-copiar");
+      const t = el("span"); t.append(el("span", "suave", etiqueta + " "), el("code", null, valor));
+      const b = el("button", "boton-sec", "Copiar"); b.type = "button";
+      b.addEventListener("click", function () {
+        function seleccionar() { const r = document.createRange(); r.selectNodeContents(t.lastChild); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+        const texto = etiqueta === "Concepto" ? valor : valor.replace(/\s/g, "");
+        if (!navigator.clipboard) return seleccionar();
+        navigator.clipboard.writeText(texto)
+          .then(function () { b.textContent = "Copiado"; setTimeout(function () { b.textContent = "Copiar"; }, 1500); })
+          .catch(seleccionar);
+      });
+      f.append(t, b); return f;
+    }
+    // Bizum Pay: si quien cobra ha conectado su TPV, se paga sin salir del enlace
+    // y el pago queda apuntado solo, sin que nadie tenga que confirmarlo.
+    if (g.bizum_pay && acreedor.yo) caja.appendChild(botonBizumPay(yoId, p, acreedor));
+    if (acreedor.telefono) caja.appendChild(dato("Bizum", acreedor.telefono));
+    if (acreedor.iban) caja.appendChild(dato("IBAN", R.formatoIBAN(acreedor.iban)));
+    if (acreedor.telefono || acreedor.iban) caja.appendChild(dato("Concepto", R.concepto(g)));
+    else caja.appendChild(el("p", "ayuda", "Pídele a " + (acreedor.nombre || "quien cobra") + " su Bizum o IBAN. Saldamos no cobra ni guarda dinero: pagas directo desde tu banco."));
+    const ya = (g.avisos || []).find(function (v) { return v.de === yoId && v.a === p.a; });
+    if (ya) {
+      caja.appendChild(el("p", "mensaje ok", "Ya avisaste de que pagaste. Falta que " + (acreedor.nombre || "quien cobra") + " lo confirme."));
+    } else {
+      const b = el("button", "anadir", "Ya he pagado"); b.type = "button";
+      const msg = el("p", "mensaje"); msg.hidden = true;
+      b.addEventListener("click", async function () {
+        b.disabled = true;
+        const token = codigoDeEnlace();
+        const r = await sb.rpc("grupo_avisar_pago", { t: token, de: yoId, a: p.a, importe: p.importe });
+        if (r.error) { b.disabled = false; msg.textContent = "No se pudo avisar: " + traducirError(r.error); msg.className = "mensaje mal"; msg.hidden = false; return; }
+        g.avisos = (g.avisos || []).concat([{ de: yoId, a: p.a, importe: p.importe }]);
+        b.remove();
+        msg.textContent = "¡Hecho! Hemos avisado a " + (acreedor.nombre || "quien cobra") + ". Cuando confirme que le ha llegado, quedará como pagado.";
+        msg.className = "mensaje ok"; msg.hidden = false;
+      });
+      caja.append(b, msg);
+    }
+    return caja;
+  }
+
+  function botonBizumPay(yoId, p, acreedor) {
+    const caja = el("div", "bizum-pay-caja");
+    const b = el("button", "bizum-pay", "Pagar " + R.eur(p.importe) + " con Bizum Pay"); b.type = "button";
+    const nota = el("p", "ayuda", "Confirmas en la app de tu banco y el dinero llega directo a " + (acreedor.nombre || "quien cobra") + ". Queda apuntado solo.");
+    const msg = el("p", "mensaje"); msg.hidden = true;
+    b.addEventListener("click", async function () {
+      b.disabled = true; b.textContent = "Abriendo Bizum…";
+      const datos = { t: codigoDeEnlace(), de: yoId, a: p.a, importe: p.importe };
+      try {
+        if (window.MODO_DEMO && window.DemoBizum) { window.DemoBizum.pagar(Object.assign({ cobra: acreedor.nombre, grupo: g.nombre }, datos)); return; }
+        const r = await fetch("/api/bizum-iniciar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(datos) });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error || "No se pudo iniciar el pago");
+        // Formulario hacia el TPV de Redsys de quien cobra (así lo pide Redsys)
+        const f = document.createElement("form"); f.method = "POST"; f.action = j.url;
+        Object.keys(j.campos).forEach(function (k) { const i = document.createElement("input"); i.type = "hidden"; i.name = k; i.value = j.campos[k]; f.appendChild(i); });
+        document.body.appendChild(f); f.submit();
+      } catch (e) {
+        b.disabled = false; b.textContent = "Pagar " + R.eur(p.importe) + " con Bizum Pay";
+        msg.textContent = e.message || "No se pudo iniciar el pago"; msg.className = "mensaje mal"; msg.hidden = false;
+      }
+    });
+    caja.append(b, nota, msg);
+    return caja;
+  }
+
+  // Vuelta desde Bizum: ?pedido=…&bizum=ok|ko
+  (function vueltaBizum() {
+    const q = new URLSearchParams(location.search);
+    const pedido = q.get("pedido"), r = q.get("bizum");
+    if (!pedido || !r) return;
+    const aviso = el("p", "mensaje"); aviso.id = "aviso-bizum";
+    document.querySelector("main").insertBefore(aviso, document.getElementById("contenido"));
+    if (r !== "ok") { aviso.className = "mensaje mal"; aviso.textContent = "El pago con Bizum no se ha completado. No se ha cobrado nada; puedes intentarlo otra vez."; return; }
+    aviso.className = "mensaje"; aviso.textContent = "Comprobando tu pago con el banco…";
+    let intentos = 0;
+    (async function mirar() {
+      const e = await sb.rpc("bizum_estado", { t: codigoDeEnlace(), pedido: pedido });
+      if (e.data === "pagado") { aviso.className = "mensaje ok"; aviso.textContent = "¡Pagado con Bizum Pay! Ya está apuntado en las cuentas del grupo, sin que nadie tenga que confirmarlo."; cargar(); return; }
+      if (e.data === "fallido") { aviso.className = "mensaje mal"; aviso.textContent = "El banco no ha autorizado el pago. No se ha cobrado nada."; return; }
+      if (++intentos < 8) setTimeout(mirar, 1500);
+      else aviso.textContent = "Tu banco aún no ha confirmado el pago. Si te ha llegado el cargo, aparecerá aquí en unos minutos.";
+    })();
+  })();
+
+  $("quien").addEventListener("change", function () {
+    const id = this.value;
+    $("mi-detalle").hidden = !id;
+    if (!id) return;
+    const d = R.detalle(g, id);
+    const nom = function (x) { return R.nombre(g, x); };
+    if (d.paga.length) { $("mi-cifra").textContent = "Pagas " + R.eur(-d.saldo.neto); $("mi-cifra").className = "resultado-grande negativo-txt"; }
+    else if (d.cobra.length) { $("mi-cifra").textContent = "Te deben " + R.eur(d.saldo.neto); $("mi-cifra").className = "resultado-grande positivo-txt"; }
+    else { $("mi-cifra").textContent = "Estás en paz"; $("mi-cifra").className = "resultado-grande"; }
+    $("mi-explica").textContent = "Tu parte total es " + R.eur(d.saldo.parte) + " y ya has pagado " + R.eur(d.saldo.pagado + d.saldo.enviado - d.saldo.recibido) + ".";
+    const mp = $("mis-pagos"); mp.innerHTML = "";
+    d.paga.forEach(function (p) { mp.appendChild(comoPagar(id, p)); });
+    d.cobra.forEach(function (p) { const f = el("div", "fila-pago"); f.append(el("span", "texto-pago", nom(p.de) + " te paga"), el("span", "importe", R.eur(p.importe))); mp.appendChild(f); });
+    const ml = $("mis-lineas"); ml.innerHTML = "";
+    d.lineas.forEach(function (l) {
+      const f = el("div", "fila-pago");
+      f.append(el("span", "texto-pago", l.concepto + (l.pagado ? " · adelantaste " + R.eur(l.pagado) : "")), el("span", "importe", R.eur(l.parte)));
+      ml.appendChild(f);
+    });
+  });
+</script>
+<script src="js/extras-demo.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

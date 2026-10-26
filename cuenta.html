@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="img/icono.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b6e4f">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Saldamos · Tu parte de la cuenta</title>
+<meta name="description" content="Mira cuánto te toca de la cuenta y avisa a quien pagó.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/estilos.css">
+<style>
+  .quien { display: flex; flex-wrap: wrap; gap: 8px; }
+  .quien button { font: inherit; font-weight: 600; padding: 10px 16px; border-radius: 999px; border: 1.5px solid var(--borde); background: var(--tarjeta); color: var(--texto); cursor: pointer; }
+  .quien button[aria-pressed="true"] { background: var(--marca); border-color: var(--marca); color: var(--sobre-marca); }
+  .mi-parte { background: var(--marca-claro); border-radius: 14px; padding: 18px; display: grid; gap: 6px; text-align: center; }
+  .bizum { display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .bizum code { font-size: 1.15rem; font-weight: 600; letter-spacing: .03em; }
+</style>
+</head>
+<body>
+<!-- Página pública del QR de mesa. Los datos vienen en el propio enlace (#…):
+     no hay base de datos ni cuenta. Todo se pinta con textContent. -->
+<main class="libreta">
+  <div class="barra-sup">
+    <a class="marca" href="index.html"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect class="l1" x="6" y="6" width="52" height="52" rx="16"/><path class="l3" d="M19 33l9 9 18-20"/></svg>saldamos</a>
+  </div>
+
+  <section id="vacio" class="tarjeta" hidden>
+    <p style="margin:0">Este enlace no tiene ninguna cuenta. Pide que te vuelvan a enseñar el QR.</p>
+  </section>
+
+  <section id="cuenta" hidden>
+    <span class="etiqueta">🧾 <span id="c-fecha"></span></span>
+    <h1 id="c-motivo" style="margin:4px 0 2px"></h1>
+    <p class="ayuda" id="c-resumen" style="margin:0 0 16px"></p>
+
+    <div id="bloque-quien">
+      <span class="etiqueta">¿Quién eres?</span>
+      <div class="quien" id="quien"></div>
+    </div>
+
+    <div class="mi-parte" id="mi-parte" style="margin-top:16px">
+      <span class="etiqueta" style="margin:0" id="p-titulo">Te toca pagar</span>
+      <p class="resultado-grande" id="p-cifra"></p>
+      <p class="ayuda" id="p-a-quien" style="margin:0"></p>
+      <div class="bizum" id="bizum" hidden>
+        <span>Bizum a</span> <code id="b-tel"></code>
+        <button type="button" class="boton-sec" id="b-copiar">Copiar</button>
+      </div>
+      <a class="anadir boton-wa" id="avisar" target="_blank" rel="noopener" hidden>Avisar que ya pagué</a>
+    </div>
+
+    <p class="ayuda" style="text-align:center;margin-top:20px">El dinero va directo de tu banco a quien pagó: Saldamos no lo toca.<br><a href="calculadora.html">Divide tu próxima cuenta gratis</a></p>
+  </section>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/reparto.js"></script>
+<script>
+(function () {
+  const R = window.Reparto;
+  const $ = function (id) { return document.getElementById(id); };
+
+  function leer() {
+    try {
+      let h = location.hash.slice(1).replace(/-/g, "+").replace(/_/g, "/");
+      while (h.length % 4) h += "=";
+      const c = JSON.parse(decodeURIComponent(escape(atob(h))));
+      if (!c || typeof c.t !== "number") return null;
+      return c;
+    } catch (e) { return null; }
+  }
+  const c = leer();
+  if (!c) { $("vacio").hidden = false; return; }
+  $("cuenta").hidden = false;
+
+  const txt = function (x, n) { return String(x == null ? "" : x).slice(0, n || 60); };
+  const num = function (x) { return Math.max(0, Math.round(Number(x) || 0)); };
+  const pagador = txt(c.q, 40);
+  const tel = txt(c.b, 16).replace(/[^\d+]/g, "");
+
+  $("c-motivo").textContent = txt(c.m) || "Cuenta a dividir";
+  if (c.f && /^\d{4}-\d{2}-\d{2}$/.test(c.f)) {
+    const f = new Date(c.f + "T12:00").toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
+    $("c-fecha").textContent = f.charAt(0).toUpperCase() + f.slice(1);
+  }
+  $("c-resumen").textContent = "Total " + R.eur(num(c.t)) + (c.p ? " (con " + num(c.p) + " % de propina)" : "") + " · " + num(c.n) + " personas";
+
+  // Opciones: personas con nombre y, si hay, "Otra persona"
+  const opciones = (Array.isArray(c.l) ? c.l : []).slice(0, 99).map(function (x) { return { nombre: txt(x[0], 40), importe: num(x[1]) }; });
+  if (Array.isArray(c.o) && num(c.o[0]) > 0) opciones.push({ nombre: opciones.length ? "Otra persona" : "Yo", importe: num(c.o[1]), anonimo: true });
+
+  let elegido = null;
+  const caja = $("quien");
+  // Quien pagó no se paga a sí mismo
+  const visibles = opciones.map(function (o, i) { return i; }).filter(function (i) { return !(pagador && opciones[i].nombre.toLowerCase() === pagador.toLowerCase()); });
+  if (visibles.length === 1 && opciones[visibles[0]].anonimo) opciones[visibles[0]].nombre = "Yo";
+  visibles.forEach(function (i) {
+    const o = opciones[i];
+    const b = document.createElement("button"); b.type = "button"; b.textContent = o.nombre;
+    b.setAttribute("aria-pressed", "false");
+    b.addEventListener("click", function () { elegido = i; pintar(); });
+    caja.appendChild(b);
+  });
+  // Si todos pagan lo mismo y no hay nombres, no hace falta elegir
+  if (visibles.length === 1) { elegido = visibles[0]; $("bloque-quien").hidden = true; }
+
+  function pintar() {
+    caja.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.textContent === (opciones[elegido] || {}).nombre)); });
+    const o = opciones[elegido];
+    if (!o) {
+      $("p-titulo").textContent = "Elige tu nombre arriba";
+      $("p-cifra").textContent = "—"; $("p-a-quien").textContent = "";
+      $("bizum").hidden = true; $("avisar").hidden = true; return;
+    }
+    $("p-titulo").textContent = o.anonimo && visibles.length > 1 ? "A cada uno de los demás le toca" : "Te toca pagar";
+    $("p-cifra").textContent = R.eur(o.importe);
+    $("p-a-quien").textContent = pagador ? "A " + pagador : "A quien pagó la cuenta";
+    $("bizum").hidden = !tel; $("b-tel").textContent = tel;
+    const yo = o.anonimo ? "" : " (" + o.nombre + ")";
+    const msg = "✅ Te he pagado *" + R.eur(o.importe) + "*" + yo + " de «" + ($("c-motivo").textContent) + "».\n_Calculado con Saldamos_";
+    $("avisar").href = R.enlaceWhatsApp(msg, tel);
+    $("avisar").hidden = false;
+  }
+  $("b-copiar").addEventListener("click", function () {
+    const b = this;
+    if (!navigator.clipboard) return;
+    navigator.clipboard.writeText(tel).then(function () { b.textContent = "Copiado"; setTimeout(function () { b.textContent = "Copiar"; }, 1500); });
+  });
+  pintar();
+})();
+</script>
+<script src="js/extras-demo.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

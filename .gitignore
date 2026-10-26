@@ -1,0 +1,14 @@
+# Copias antiguas y archivos que no se publican
+_archivo/
+*.zip
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Vercel y entorno local (nunca subir claves)
+.vercel/
+.env
+.env.*
+node_modules/
