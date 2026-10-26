@@ -298,6 +298,25 @@
     const e = String(email || "").trim().toLowerCase();
     return S.usuarios.find(function (u) { return u.email.toLowerCase() === e; });
   }
+  // Cuentas del equipo que existen en cualquier navegador (administrador + Premium, la app vacía).
+  // El código es público: del email solo se guarda su resumen SHA-256, nunca el email.
+  // La primera contraseña con la que entra queda como suya.
+  const CUENTAS_FIJAS = [
+    { email_sha: "8988a085ecbdb4bd1fcd5a0c5c21c8603b8eb78707979eb5107e53be2022eb32", nombre: "Pedro Sariego", rol: "admin", plan: "premium" }
+  ];
+  function cuentaFija(email) {
+    const e = String(email || "").trim().toLowerCase();
+    if (!e) return Promise.resolve(null);
+    return resumen(e).then(function (h) {
+      const f = CUENTAS_FIJAS.find(function (c) { return c.email_sha === h; });
+      if (!f || porEmail(e)) return null;
+      const ahora = new Date().toISOString();
+      const u = { id: "u-" + id(), email: e, nombre: f.nombre, rol: f.rol, plan: f.plan, estado: "activo", creado: ahora, ultimo_acceso: null,
+        email_confirmado: true, n_tareas: 0, n_gastos: 0, codigo_invitacion: codigo() };
+      S.usuarios.push(u); guardar();
+      return u;
+    });
+  }
   function abrirSesion(u) {
     u.ultimo_acceso = new Date().toISOString();
     S.sesion = { user: { id: u.id, email: u.email } }; guardar();
@@ -564,7 +583,10 @@
       o = o || {};
       const u = porEmail(o.email);
       const mal = function (m) { return espera({ data: { session: null, user: null }, error: { message: m } }); };
-      if (!u) return mal("Invalid login credentials");
+      if (!u) return cuentaFija(o.email).then(function (f) {
+        if (!f) return mal("Invalid login credentials");
+        return auth.signInWithPassword(o);   // ya existe: entra como cualquier otra cuenta
+      });
       if (u.estado === "bloqueado") return mal("No autorizado: cuenta bloqueada");
       if (u.id === YO) return espera(abrirSesion(u));
       // Cuenta creada desde el back office: la primera contraseña que se usa queda como suya (como aceptar la invitación)
@@ -586,6 +608,14 @@
         const u = { id: "u-" + id(), email: email, nombre: String(datos.nombre || email.split("@")[0]).slice(0, 80), rol: "usuario", plan: "gratis",
           estado: "activo", creado: ahora, ultimo_acceso: ahora, email_confirmado: true, n_tareas: 0, n_gastos: 0, clave: h, codigo_invitacion: codigo() };
         S.usuarios.push(u);
+        return resumen(email).then(function (he) {
+          // Si es una cuenta del equipo, nace con su rol y su plan
+          const f = CUENTAS_FIJAS.find(function (c) { return c.email_sha === he; });
+          if (f) { u.rol = f.rol; u.plan = f.plan; if (!datos.nombre) u.nombre = f.nombre; }
+          return u;
+        });
+      }).then(function (u) {
+        const ahora = u.creado;
         // Invitado por un amigo: Premium gratis para los dos si hay una promoción de invitación activa
         const invitador = datos.invita && S.usuarios.find(function (x) { return x.codigo_invitacion === String(datos.invita).toUpperCase(); });
         if (invitador) {
